@@ -46,7 +46,13 @@
 	infoPedeEscolhaCarta: .asciz "\nSelecione uma de suas cartas para jogar."
 	infoEscolhaJ1: .asciz "\n>> Carta escolhida por Jogador 1: "
 	infoEscolhaJ2: .asciz "\n>> Carta escolhida por Jogador 2: "
+	infoJ1jogouFechada: .asciz "\n>> Jogador 1 jogou uma carta fechada (virada para baixo)"
 	infoValendo: .asciz " (Valendo: %d tentos)\n"
+	infoAbertaFechada: .asciz "\nComo deseja jogar a carta?\n\n1) Carta aberta\n2) Carta fechada\n"
+	infoOpcao: .asciz "\nOpcao escolhida: "
+
+	perguntaAumentar: .asciz "\nDeseja pedir "
+	infoTruco: .asciz "truco"
 
 	J1ganhouRodada: .asciz "\n\n>> JOGADOR 1 GANHOU A RODADA!\n"
 	J2ganhouRodada: .asciz "\n\n>> JOGADOR 2 GANHOU A RODADA!\n"
@@ -90,6 +96,10 @@
 	pesoCartaJ1: .int 0 #Peso calculado equivalente a carta escolhida
 	cartaEscolhidaJ2: .int 0
 	pesoCartaJ2: .int 0
+
+	opcaoAbertaFechada: .int 0
+
+	flagCartaFechadaJ1: .int 0
 
 	flagUsouCarta1J1: .int 0 #Flags para saber se o jogador ja usou a carta (0 ou 1)
 	flagUsouCarta2J1: .int 0
@@ -535,6 +545,11 @@ compara2Cartas:
 	pushl %ebp
 	movl %esp, %ebp
 
+	#Verifica se J1 (humano) escolheu jogar a carta fechada
+	movl flagCartaFechadaJ1, %eax
+	cmpl $1, %eax
+	je J2ganha #Caso afirmativo, Jogador 2 ganha automaticamente
+
 	#Calcula o peso das 2 cartas
 
 	movl cartaEscolhidaJ1, %eax
@@ -682,6 +697,8 @@ pedeCartaJ1:
 
 	addl $16, %esp
 
+verifica_cartaEscolhida:
+
 	movl numDigitado, %eax
 	cmpl $1, %eax
 	je J1escolheu1
@@ -709,7 +726,7 @@ J1escolheu1:
 
 	movl carta1J1, %eax
 	movl %eax, cartaEscolhidaJ1
-	jmp fimEscolheCartaJ1
+	jmp pede_AbertaFechada
 
 J1escolheu2:
 
@@ -721,7 +738,7 @@ J1escolheu2:
 
 	movl carta2J1, %eax
 	movl %eax, cartaEscolhidaJ1
-	jmp fimEscolheCartaJ1
+	jmp pede_AbertaFechada
 
 J1escolheu3:
 
@@ -734,19 +751,62 @@ J1escolheu3:
 	movl carta3J1, %eax
 	movl %eax, cartaEscolhidaJ1
 
-fimEscolheCartaJ1:
+pede_AbertaFechada:
+
+	pushl $infoAbertaFechada
+	call printf
+	pushl $infoOpcao
+	call printf
+
+	pushl $opcaoAbertaFechada
+	pushl $formatoInt
+	call scanf
+
+	addl $16, %esp
+
+	#Verifica opcao escolhida de carta aberta ou fechada
+	movl opcaoAbertaFechada, %eax
+	cmpl $1, %eax
+	je carta_aberta
+	cmpl $2, %eax
+	je carta_fechada
+
+	pushl $opcaoInvalida #Opcao digitada foi invalida (diferente de 1 ou 2)
+	call printf
+	addl $4, %esp
+	jmp pede_AbertaFechada 
+
+carta_aberta:
+
+	movl $0, flagCartaFechadaJ1
+	jmp mostra_escolha
+
+carta_fechada:
+
+	movl $1, flagCartaFechadaJ1
+
+	pushl $infoJ1jogouFechada
+	call printf
+	addl $4, %esp
+
+	jmp fimEscolheCartaJ1
+
+mostra_escolha:
 
 	pushl $infoEscolhaJ1
-	call printf	
+	call printf
+	addl $4, %esp
 	
 	movl cartaEscolhidaJ1, %eax
 	call imprimeCarta
+
+fimEscolheCartaJ1:
 
 	pushl $pulaLinha
 	call printf
 	pushl $separador
 	call printf
-	addl $12, %esp
+	addl $8, %esp
 
 	movl %ebp, %esp
 	popl %ebp
