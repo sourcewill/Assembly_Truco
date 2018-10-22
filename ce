@@ -1,0 +1,38 @@
+OBJECT="out/$1.o"
+EXECUTABLE="bin/$1"
+
+if [ ! -d bin ]
+then
+	mkdir bin
+	echo "Diretorio bin criado"
+fi
+
+if [ ! -d out ]
+then
+	mkdir out
+	echo "Diretorio out criado"
+fi
+
+if [ -z $1 ]
+then
+	echo "Digite o nome do arquivo"
+else
+	if [ "$2" == "-d" ]
+	then
+		COMP_DEBUG="-gstabs"
+		PREFIX_EXEC="gdb $EXECUTABLE"
+	else
+		COMP_DEBUG=""
+		PREFIX_EXEC="./$EXECUTABLE"
+	fi
+
+	if [ -f $1.s ]
+	then
+		echo "Montando $1.s -> $OBJECT -> $EXECUTABLE"
+		as -32 $COMP_DEBUG $1.s -o $OBJECT
+		ld -m elf_i386 $OBJECT -l c -dynamic-linker /lib/ld-linux.so.2 -o $EXECUTABLE
+		$PREFIX_EXEC
+	else
+		echo "Arquivo '$1' nao encontrado"
+	fi
+fi
