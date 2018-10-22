@@ -17,7 +17,7 @@
 
 	aposta: .int 1 #Numero de tentos que esta valendo uma mao (1, 3, 6, 9 ou 12)
 	
-	separador: .asciz "\n------------------------------------------------"	
+	separador: .asciz "\n------------------------------------------------\n"	
 	abertura1: .asciz "\n+----------------------------------------------+"
 	abertura2: .asciz "\n|  Programacao em Linguagem de Maquina - 2018  |"
 	abertura3: .asciz "\n|        JOGO DE TRUCO - ASSEMBLY (x86)        |"
@@ -42,7 +42,7 @@
 	infoCarta2J2: .asciz "\nCarta 2 (Jogador 2): "
 	infoCarta3J2: .asciz "\nCarta 3 (Jogador 2): "
 	infoCartaVira: .asciz "\nCarta Vira: "
-	infoDistrbuindo: .asciz "\n\nDistribuindo cartas aleatorias para os jogadores...\n"
+	infoDistrbuindo: .asciz "\nDistribuindo cartas aleatorias para os jogadores...\n"
 	infoPedeEscolhaCarta: .asciz "\nSelecione uma de suas cartas para jogar."
 	infoEscolhaJ1: .asciz "\n>> Carta escolhida por Jogador 1: "
 	infoEscolhaJ2: .asciz "\n>> Carta escolhida por Jogador 2: "
@@ -52,24 +52,23 @@
 	infoOpcao: .asciz "\nOpcao escolhida: "
 
 	desejaPedirTruco: .asciz "\nDeseja pedir truco?\n"
-	desejaPedir: .asciz "\nDeseja pedir %d?\n"
 	simNao: .asciz "\n1) Sim\n2) Nao\n"
 	simNaoAumenta: .asciz "\n0) Fugir\n1) Aceitar\n2) Pedir %d\n"
 	fogeOuAceita: .asciz "\n0) Fugir\n1) Aceitar\n"
 
-	J1fugiu: .asciz "\nO Jogador 1 fugiu da aposta.\n"
-	J2fugiu: .asciz "\nO Jogador 2 fugiu da aposta.\n"
+	J1fugiu: .asciz "\nO Jogador 1 FUGIU da aposta.\n"
+	J2fugiu: .asciz "\nO Jogador 2 FUGIU da aposta.\n"
 
-	valendo: .asciz "\nAposta aceita. Agora a mão vale %d tentos!\n"
+	valendo: .asciz "\nAPOSTA ACEITA. Agora a mao vale %d tentos!\n"
 
 	pediuTruco: .asciz "\nJogador %d pediu TRUCO!\n"
 	pediu6: .asciz "\nJogador %d pediu SEIS!\n"
 	pediu9: .asciz "\nJogador %d pediu NOVE!\n"
 	pediu12: .asciz "\nJogador %d pediu DOZE!\n"
 
-	J1ganhouRodada: .asciz "\n\n>> JOGADOR 1 GANHOU A RODADA!\n"
-	J2ganhouRodada: .asciz "\n\n>> JOGADOR 2 GANHOU A RODADA!\n"
-	empateRodada: .asciz "\n\n>> A RODADA EMPATOU.\n"
+	J1ganhouRodada: .asciz "\n>> JOGADOR 1 GANHOU A RODADA!\n"
+	J2ganhouRodada: .asciz "\n>> JOGADOR 2 GANHOU A RODADA!\n"
+	empateRodada: .asciz "\n>> A RODADA EMPATOU.\n"
 
 	infoJ1GanhouMao: .asciz "\n>> JOGADOR 1 VENCEU A MAO!"
 	infoJ2GanhouMao: .asciz "\n>> JOGADOR 2 VENCEU A MAO!"
@@ -80,10 +79,13 @@
 
 	pedeEscolhaCarta: .asciz "\n\nNumero da carta escolhida: "
 
-	J1escolhendo: .asciz "\n\nJogador 1 esta escolhendo uma carta...\n"
-	J2escolhendo: .asciz "\n\nJogador 2 esta escolhendo uma carta...\n"
+	J1escolhendo: .asciz "Jogador 1 esta escolhendo uma carta...\n"
+	J2escolhendo: .asciz "Jogador 2 esta escolhendo uma carta...\n"
 
 	opcaoInvalida: .asciz "\nA opcao digitada eh invalida."
+
+	digiteAlgo: .asciz "\nPressione <Enter> para continuar... "
+	limpabuffer: .asciz "%*c"
 
 	pulaLinha: .asciz "\n"
 
@@ -338,7 +340,9 @@ imprimeAbertura:
 	call printf
 	pushl $abertura1
 	call printf
-	addl $20, %esp
+	pushl $pulaLinha
+	call printf
+	addl $24, %esp
 
 	movl %ebp, %esp
 	popl %ebp
@@ -1091,7 +1095,7 @@ executaMao:
 	call printf
 	addl $4, %esp
 
-	#call imprimeTodas
+	#call imprimeTodas (para testes)
 
 inicioRodada1:	
 
@@ -1123,6 +1127,8 @@ executaRodada1:
 	call compara2Cartas
 	movl flagGanhouAtual, %eax
 	movl %eax, flagGanhouRodada1
+
+	call pausaExecucao
 
 inicioRodada2:
 
@@ -1162,6 +1168,8 @@ executaRodada2:
 	movl flagMaoJaTeveGanhador, %eax
 	cmpl $1, %eax
 	je fimExecutaMao
+
+	call pausaExecucao
 
 iniciaRodada3:
 
@@ -1203,6 +1211,7 @@ executaRodada3:
 fimExecutaMao:
 
 	call imprimePlacar
+	call pausaExecucao
 
 	movl %ebp, %esp
 	popl %ebp
@@ -1765,9 +1774,33 @@ fimJ2pedirTruco:
 	
 #-----------------------------------------------------------------------------------------------------------
 
+#Pausa a execucao ate que o usuario digite uma tecla
+pausaExecucao:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl $digiteAlgo
+	call printf
+	pushl $numDigitado
+	pushl $limpabuffer
+	call scanf
+	call getchar
+	addl $12, %esp
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
 _start:
 
 	call imprimeAbertura
+	pushl $digiteAlgo
+	call printf
+	call getchar
+	addl $4, %esp
 	
 inicioJogo:
 
