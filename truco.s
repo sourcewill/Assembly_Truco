@@ -51,8 +51,21 @@
 	infoAbertaFechada: .asciz "\nComo deseja jogar a carta?\n\n1) Carta aberta\n2) Carta fechada\n"
 	infoOpcao: .asciz "\nOpcao escolhida: "
 
-	perguntaAumentar: .asciz "\nDeseja pedir "
-	infoTruco: .asciz "truco"
+	desejaPedirTruco: .asciz "\nDeseja pedir truco?\n"
+	desejaPedir: .asciz "\nDeseja pedir %d?\n"
+	simNao: .asciz "\n1) Sim\n2)Nao\n"
+	simNaoAumenta: .asciz "\n0) Fugir\n1) Aceitar\n2) Pedir %d\n"
+	fogeOuAceita: .asciz "\n0) Fugir\n1) Aceitar\n"
+
+	J1fugiu: .asciz "\nO Jogador 1 fugiu da aposta.\n"
+	J2fugiu: .asciz "\nO Jogador 2 fugiu da aposta.\n"
+
+	valendo: .asciz "\nAposta aceita. Agora a mão vale %d tentos!\n"
+
+	pediuTruco: .asciz "\nJogador %d pediu TRUCO!\n"
+	pediu6: .asciz "\nJogador %d pediu SEIS!\n"
+	pediu9: .asciz "\nJogador %d pediu NOVE!\n"
+	pediu12: .asciz "\nJogador %d pediu DOZE!\n"
 
 	J1ganhouRodada: .asciz "\n\n>> JOGADOR 1 GANHOU A RODADA!\n"
 	J2ganhouRodada: .asciz "\n\n>> JOGADOR 2 GANHOU A RODADA!\n"
@@ -98,8 +111,12 @@
 	pesoCartaJ2: .int 0
 
 	opcaoAbertaFechada: .int 0
-
 	flagCartaFechadaJ1: .int 0
+
+	flagJaPediuTruco: .int 0 #Flag que marca se alguem ja pediu truco (0 ou 1)
+
+	respostaApostaJ1: .int 0 # (0, 1 ou 2) 0 = foge | 1 = aceita | 2 = aumenta aposta
+	respostaApostaJ2: .int 0
 
 	flagUsouCarta1J1: .int 0 #Flags para saber se o jogador ja usou a carta (0 ou 1)
 	flagUsouCarta2J1: .int 0
@@ -170,6 +187,10 @@ iniciaVariaveis:
 	movl $0, flagGanhouRodada1
 	movl $0, flagGanhouRodada2
 	movl $0, flagGanhouRodada3
+
+	movl $0, flagJaPediuTruco
+	movl $999, respostaApostaJ1
+	movl $999, respostaApostaJ2
 
 	movl $0, flagMaoJaTeveGanhador
 	movl $0, flagJaFoiR3
@@ -652,6 +673,7 @@ J1inicia:
 	pushl $infoJ1primeiro
 	call printf
 	addl $4, %esp
+	call J1pedirTruco
 	call escolheCartaJ1
 	jmp fimSorteiaPrimeiro
 
@@ -1084,6 +1106,7 @@ inicioRodada1:
 	cmpl $1, %eax #Se jogador 1 iniciou a partida
 	je J1comecou
 
+	call J1pedirTruco
 	call escolheCartaJ1
 	jmp executaRodada1
 
@@ -1111,6 +1134,7 @@ inicioRodada2:
 	cmpl $1, %eax
 	jg J2ganhouR1
 
+	call J1pedirTruco
 	call escolheCartaJ1
 	call escolheCartaJ2
 	jmp executaRodada2
@@ -1118,6 +1142,7 @@ inicioRodada2:
 J2ganhouR1:
 
 	call escolheCartaJ2
+	call J1pedirTruco
 	call escolheCartaJ1
 
 executaRodada2:
@@ -1146,6 +1171,7 @@ iniciaRodada3:
 	cmpl $1, %eax
 	jg J2ganhouR2
 
+	call J1pedirTruco
 	call escolheCartaJ1
 	call escolheCartaJ2
 	jmp executaRodada3
@@ -1153,6 +1179,7 @@ iniciaRodada3:
 J2ganhouR2:
 
 	call escolheCartaJ2
+	call J1pedirTruco
 	call escolheCartaJ1
 
 executaRodada3:
@@ -1175,13 +1202,271 @@ fimExecutaMao:
 
 #-----------------------------------------------------------------------------------------------------------
 
+#Calcula se J2 aceita aposta e seta a flag respostaApostaJ2 (0 = foge | 1 = aceita | 2 = aumenta aposta)
+calculaProbabilidadeJ2:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl $2, respostaApostaJ2
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
+#Pergunta se Jogador 1 quer pedir truco, e trata os possiveis fluxos
+opcaoJ1pedirTruco:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+pergunta_truco:
+
+	pushl $desejaPedirTruco #Pergunta se quer pedir truco
+	call printf
+	pushl $simNao
+	call printf
+	pushl $infoOpcao
+	call printf
+
+	pushl $numDigitado #Le a resposta
+	pushl $formatoInt
+	call scanf
+
+	addl $20, %esp
+
+	movl numDigitado, %eax #Verifica e trata a resposta do jogador
+	cmpl $1, %eax
+	je J1pede_truco
+	cmpl $2, %eax
+	je fimOpcaoJ1pedirTruco
+
+	pushl $opcaoInvalida
+	call printf
+	addl $4, %esp
+	jmp pergunta_truco
+
+J1pede_truco:
+
+	movl $1, flagJaPediuTruco
+
+	pushl $1
+	pushl $pediuTruco
+	call printf
+	addl $8, %esp
+
+	call calculaProbabilidadeJ2
+	movl respostaApostaJ2, %eax
+	cmpl $0, %eax
+	je J2_fugiu #Se J2 fugir
+	cmpl $1, %eax
+	je J2eceitou_truco #Se J2 aceitar
+	cmpl $2, %eax
+	je J2pede_6 #Se J2 pedir 6
+
+J1_fugiu:
+
+	pushl $J1fugiu
+	call printf
+	pushl $infoJ2GanhouMao
+	call printf
+	pushl aposta
+	pushl $infoValendo
+	call printf
+	addl $16, %esp
+
+	movl aposta, %eax
+	addl %eax, tentosJ2
+	jmp fimExecutaMao #Pula direto para o fim da Mao atual
+
+J2_fugiu:
+
+	pushl $J2fugiu
+	call printf
+	pushl $infoJ1GanhouMao
+	call printf
+	pushl aposta
+	pushl $infoValendo
+	call printf
+	addl $16, %esp
+
+	movl aposta, %eax
+	addl %eax, tentosJ1
+	jmp fimExecutaMao #Pula direto para o fim da Mao atual
+
+J2eceitou_truco:
+
+	movl $3, aposta #Aceitou o pedido de truco (aposta vale 3)
+
+	pushl $3
+	pushl $valendo
+	call printf
+	addl $8, %esp
+
+	jmp fimOpcaoJ1pedirTruco #Retorna ao fluxo da jogada
+
+J2pede_6:
+
+	movl $3, aposta #Se Jogador 2 pediu 6, ja aceitou o pedido de truco (aposta vale 3)
+
+	pushl $2
+	pushl $pediu6
+	call printf
+
+	pushl $9
+	pushl $simNaoAumenta
+	call printf
+	pushl $infoOpcao
+	call printf
+
+	pushl $respostaApostaJ1
+	pushl $formatoInt
+	call scanf
+
+	addl $28, %esp
+
+	movl respostaApostaJ1, %eax
+	cmpl $0, %eax
+	je J1_fugiu
+	cmpl $1, %eax
+	je J1eceitou_6
+	cmpl $2, %eax
+	je J1pede_9
+
+	pushl $opcaoInvalida
+	call printf
+	addl $4, %esp
+	jmp J2pede_6
+
+J1eceitou_6:
+
+	movl $6, aposta
+
+	pushl $6
+	pushl $valendo
+	call printf
+	addl $8, %esp
+
+	jmp fimOpcaoJ1pedirTruco
+
+J1pede_9:
+
+	movl $6, aposta
+
+	pushl $1
+	pushl $pediu9
+	call printf
+	addl $8, %esp
+
+	call calculaProbabilidadeJ2
+	movl respostaApostaJ2, %eax
+	cmpl $0, %eax
+	je J2_fugiu #Se J2 fugir
+	cmpl $1, %eax
+	je J2eceitou_9 #Se J2 aceitar
+	cmpl $2, %eax
+	je J2pede_12 #Se J2 pedir 6
+
+J2eceitou_9:
+
+	movl $9, aposta
+
+	pushl $9
+	pushl $valendo
+	call printf
+	addl $8, %esp
+
+	jmp fimOpcaoJ1pedirTruco
+
+J2pede_12:
+
+	movl $9, aposta
+
+	pushl $2
+	pushl $pediu12
+	call printf
+
+	pushl $fogeOuAceita
+	call printf
+	pushl $infoOpcao
+	call printf
+
+	pushl $respostaApostaJ1
+	pushl $formatoInt
+	call scanf
+
+	addl $24, %esp
+
+	movl respostaApostaJ1, %eax
+	cmpl $0, %eax
+	je J1_fugiu
+	cmpl $1, %eax
+	je J1eceitou_12
+
+	pushl $opcaoInvalida
+	call printf
+	addl $4, %esp
+	jmp J2pede_12
+
+J1eceitou_12:
+
+	movl $12, aposta
+
+	pushl $12
+	pushl $valendo
+	call printf
+	addl $8, %esp
+
+	jmp fimOpcaoJ1pedirTruco
+
+fimOpcaoJ1pedirTruco:
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
+#Imprime as cartas de Jogador 1 e verifica se ele quer pedir truco
+J1pedirTruco:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl flagJaPediuTruco, %eax
+	cmpl $1, %eax
+	je fimJ1pedirTruco #Se alguem ja pediu truco nao faz nada
+
+	call imprimeCartasJ1
+
+	pushl $pulaLinha
+	call printf
+	addl $4, %esp
+
+	call opcaoJ1pedirTruco
+
+	movl respostaApostaJ1, %eax
+	cmpl $0, %eax
+	je verifica_ganhador_jogo #Se Jogador 1 fugiu da aposta, acaba a Mao atual
+
+fimJ1pedirTruco:
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+#-----------------------------------------------------------------------------------------------------------
+
 _start:
-	
+
 	call imprimeAbertura
 	
 inicioJogo:
 
 	call executaMao
+
+verifica_ganhador_jogo:
 
 	call verificaGanhadorJogo
 
