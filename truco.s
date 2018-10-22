@@ -1203,12 +1203,38 @@ fimExecutaMao:
 #-----------------------------------------------------------------------------------------------------------
 
 #Calcula se J2 aceita aposta e seta a flag respostaApostaJ2 (0 = foge | 1 = aceita | 2 = aumenta aposta)
+#Aleatoriamente (20% foge | 60% aceita | 20% aumenta )
 calculaProbabilidadeJ2:
 
 	pushl %ebp
 	movl %esp, %ebp
 
+	call geraSementeRandom
+
+	movl $100, %eax
+	movl %eax, intervalo #Configura o intervalo (0-99)
+
+	call geraRandom
+	movl aleatorio, %eax
+
+	cmpl $20, %eax
+	jl probabilidade_foge #20% de chance de fugir
+	cmpl $40, %eax
+	jl probabilidade_aumenta #20% de chance de aumentar aposta
+
+	movl $1, respostaApostaJ2
+	jmp fimCalculaProbabilidadeJ2 #60% restantes de chance de aceitar
+
+probabilidade_foge:
+
+	movl $0, respostaApostaJ2
+	jmp fimCalculaProbabilidadeJ2
+
+probabilidade_aumenta:
+
 	movl $2, respostaApostaJ2
+
+fimCalculaProbabilidadeJ2:
 
 	movl %ebp, %esp
 	popl %ebp
@@ -1450,6 +1476,10 @@ J1pedirTruco:
 	movl respostaApostaJ1, %eax
 	cmpl $0, %eax
 	je verifica_ganhador_jogo #Se Jogador 1 fugiu da aposta, acaba a Mao atual
+
+	movl respostaApostaJ2, %eax
+	cmpl $0, %eax
+	je verifica_ganhador_jogo #Se Jogador 2 fugiu da aposta, acaba a Mao atual
 
 fimJ1pedirTruco:
 
