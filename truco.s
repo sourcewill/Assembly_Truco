@@ -188,7 +188,6 @@ iniciaVariaveis:
 	movl $0, flagUsouCarta2J2
 	movl $0, flagUsouCarta3J2
 
-	movl $0, flagIniciou
 	movl $0, flagGanhouAtual
 	movl $0, flagGanhouRodada1
 	movl $0, flagGanhouRodada2
@@ -666,6 +665,15 @@ sorteiaPrimeiro:
 
 	pushl %ebp
 	movl %esp, %ebp
+
+	movl flagIniciou, %eax #Se não for a primeira mao, nao decide aleatoriamente
+	cmpl $1, %eax #Se J1 iniciou a mao anterior, J2 inicia a mao atual
+	je J2inicia
+
+	cmpl $2, %eax
+	je J1inicia
+
+	#Se a flagIniciou contem 0, sorteia quem inicia a mao
 
 	pushl $infoSorteiaPrimeiro
 	call printf
