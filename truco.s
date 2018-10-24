@@ -50,6 +50,7 @@
 	infoValendo: .asciz " (Valendo: %d tentos)\n"
 	infoAbertaFechada: .asciz "\nComo deseja jogar a carta?\n\n1) Carta aberta\n2) Carta fechada\n"
 	infoOpcao: .asciz "\nOpcao escolhida: "
+	infoTextoProbabilidade: .asciz "\nProbabilidade: %d\n"
 
 	desejaPedirTruco: .asciz "\nDeseja pedir truco?\n"
 	simNao: .asciz "\n1) Sim\n2) Nao\n"
@@ -145,6 +146,9 @@
 
 	formatoInt: .asciz "%d"
 	numDigitado: .int 0
+
+	probabilidade: .int 0
+	probabilidadeBase: .int 5
 
 	
 .section .text
@@ -456,6 +460,8 @@ imprimeTodas:
 
 	pushl $pulaLinha
 	call printf
+
+	call calculaProbabilidade
 
 	pushl $infoCarta1J2
 	call printf
@@ -1226,6 +1232,7 @@ propabilidadeJ2pedirTruco:
 	movl %esp, %ebp
 
 	call geraSementeRandom
+	call calculaProbabilidade
 
 	movl $100, %eax
 	movl %eax, intervalo #Configura o intervalo (0-99)
@@ -1233,7 +1240,7 @@ propabilidadeJ2pedirTruco:
 	call geraRandom
 	movl aleatorio, %eax
 
-	cmpl $30, %eax
+	cmpl probabilidade, %eax
 	jl probabilidade_sim #30% de chance de pedir truco
 
 	movl $2, numDigitado
@@ -1258,6 +1265,7 @@ propabilidadeJ2aceitar12:
 	movl %esp, %ebp
 
 	call geraSementeRandom
+	call calculaProbabilidade
 
 	movl $100, %eax
 	movl %eax, intervalo #Configura o intervalo (0-99)
@@ -1291,6 +1299,7 @@ calculaProbabilidadeJ2:
 	movl %esp, %ebp
 
 	call geraSementeRandom
+	call calculaProbabilidade
 
 	movl $100, %eax
 	movl %eax, intervalo #Configura o intervalo (0-99)
@@ -1790,6 +1799,135 @@ pausaExecucao:
 
 	movl %ebp, %esp
 	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+#Funções para calcular probabilidade de pedir/aceitar truco/6/9/12
+calculaProbabilidade:
+	pushl %eax
+	pushl %ebx
+	pushl %edx
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl probabilidadeBase, %ecx
+	movl %ecx, probabilidade
+	movl $10, %ebx
+	
+calculaProbabilidade_As_Carta1:
+	addl probabilidadeBase, %ecx
+
+	movl carta1J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $7, %edx
+	jnz calculaProbabilidade_As_Carta2
+	addl %ecx, probabilidade
+
+calculaProbabilidade_As_Carta2:
+	movl carta2J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $7, %edx
+	jnz calculaProbabilidade_As_Carta3
+	addl %ecx, probabilidade
+
+calculaProbabilidade_As_Carta3:
+	movl carta3J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $7, %edx
+	jnz calculaProbabilidade_Dois_Carta1
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Dois_Carta1:
+	addl probabilidadeBase, %ecx
+
+	movl carta1J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $8, %edx
+	jnz calculaProbabilidade_Dois_Carta2
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Dois_Carta2:
+	movl carta2J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $8, %edx
+	jnz calculaProbabilidade_Dois_Carta3
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Dois_Carta3:
+	movl carta3J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $8, %edx
+	jnz calculaProbabilidade_Tres_Carta1
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Tres_Carta1:
+	addl probabilidadeBase, %ecx
+
+	movl carta1J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $9, %edx
+	jnz calculaProbabilidade_Tres_Carta2
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Tres_Carta2:
+	movl carta2J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $9, %edx
+	jnz calculaProbabilidade_Tres_Carta3
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Tres_Carta3:
+	movl carta3J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl $9, %edx
+	jnz calculaProbabilidade_Vira_Carta1
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Vira_Carta1:
+	addl probabilidadeBase, %ecx
+
+	movl carta1J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl manilha, %edx
+	jnz calculaProbabilidade_Vira_Carta2
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Vira_Carta2:
+	movl carta2J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl manilha, %edx
+	jnz calculaProbabilidade_Vira_Carta3
+	addl %ecx, probabilidade
+
+calculaProbabilidade_Vira_Carta3:
+	movl carta3J2, %eax
+	movl $0, %edx
+	divl %ebx
+	cmpl manilha, %edx
+	jnz fim_calculaProbabilidade
+	addl %ecx, probabilidade
+
+fim_calculaProbabilidade:
+	pushl probabilidade
+	pushl $infoTextoProbabilidade
+	call printf
+
+	movl %ebp, %esp
+	popl %ebp
+	popl %edx
+	popl %ebx
+	popl %eax
 	ret
 
 #-----------------------------------------------------------------------------------------------------------
