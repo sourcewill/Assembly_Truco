@@ -67,6 +67,10 @@
 	pediu9: .asciz "\nJogador %d pediu NOVE!\n"
 	pediu12: .asciz "\nJogador %d pediu DOZE!\n"
 
+	pergunta11: .asciz "\n\nDeseja jogar a Mao de 11?\n"
+	aceitou11: .asciz "\nJogador %d ACEITOU a Mao de 11!\n"
+	fugiu11: .asciz "\nJogador %d FUGIU da Mao de 11!\n"
+
 	J1ganhouRodada: .asciz "\n>> JOGADOR 1 GANHOU A RODADA!\n"
 	J2ganhouRodada: .asciz "\n>> JOGADOR 2 GANHOU A RODADA!\n"
 	empateRodada: .asciz "\n>> A RODADA EMPATOU.\n"
@@ -80,10 +84,10 @@
 
 	pedeEscolhaCarta: .asciz "\n\nNumero da carta escolhida: "
 
-	J1escolhendo: .asciz "Jogador 1 esta escolhendo uma carta...\n"
-	J2escolhendo: .asciz "Jogador 2 esta escolhendo uma carta...\n"
+	J1escolhendo: .asciz "\nJogador 1 esta escolhendo uma carta...\n"
+	J2escolhendo: .asciz "\nJogador 2 esta escolhendo uma carta...\n"
 
-	opcaoInvalida: .asciz "\nA opcao digitada eh invalida."
+	opcaoInvalida: .asciz "\nA opcao digitada eh INVALIDA."
 
 	digiteAlgo: .asciz "\nPressione <Enter> para continuar... "
 	limpabuffer: .asciz "%*c"
@@ -112,6 +116,8 @@
 	pesoCartaJ1: .int 0 #Peso calculado equivalente a carta escolhida
 	cartaEscolhidaJ2: .int 0
 	pesoCartaJ2: .int 0
+
+	flagJogadorTem11: .int 0
 
 	opcaoAbertaFechada: .int 0
 	flagCartaFechadaJ1: .int 0
@@ -693,7 +699,15 @@ J1inicia:
 	pushl $infoJ1primeiro
 	call printf
 	addl $4, %esp
+
+	movl flagJogadorTem11, %eax #Se a flag nao for zero, eh mao de 11, portanto nao pode pedir trudo
+	cmpl $0, %eax
+	jne pulaPerguntaJ1
+
 	call J1pedirTruco
+
+pulaPerguntaJ1:
+
 	call escolheCartaJ1
 	jmp fimSorteiaPrimeiro
 
@@ -703,7 +717,15 @@ J2inicia:
 	pushl $infoJ2primeiro
 	call printf
 	addl $4, %esp
+
+	movl flagJogadorTem11, %eax #Se a flag nao for zero, eh mao de 11, portanto nao pode pedir trudo
+	cmpl $0, %eax
+	jne pulaPerguntaJ2
+
 	call J2pedirTruco
+
+pulaPerguntaJ2:
+
 	call escolheCartaJ2
 
 fimSorteiaPrimeiro:
@@ -1092,7 +1114,7 @@ fimVerificaGanhadorJogo:
 
 #-----------------------------------------------------------------------------------------------------------
 
-#Executa um mão (melhor de 3 rodadas)
+#Executa uma mão (melhor de 3 rodadas)
 executaMao:
 
 	pushl %ebp
@@ -1233,8 +1255,296 @@ fimExecutaMao:
 
 #-----------------------------------------------------------------------------------------------------------
 
-#Calcula probabilidade de Jogador 2 pedir truco (30% sim | 70% nao)
-propabilidadeJ2pedirTruco:
+#Executa uma mão de 11
+executaMao11:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	call iniciaVariaveis
+
+	call geraSementeRandom
+	call distribuiCartas
+	call defineManilha
+
+	pushl $pulaLinha
+	call printf
+	addl $4, %esp
+
+	#Verifica qual jogador tem 11
+
+	movl flagJogadorTem11, %eax
+	cmpl $1, %eax
+	je J1_tem11
+	jmp J2_tem11
+
+J1_tem11:
+
+	call imprimeCartasJ1
+
+	#Pergunta se J1 quer jogar ou fugir
+
+	pushl $pergunta11
+	call printf
+	pushl $simNao
+	call printf
+
+	pushl $infoOpcao
+	call printf
+
+	pushl $respostaApostaJ1
+	pushl $formatoInt
+	call scanf
+
+	addl $20, %esp
+
+	movl respostaApostaJ1, %eax
+	cmpl $1, %eax
+	je J1_aceita11
+	cmpl $2, %eax
+	je J1_foge11
+
+	#Opcao digitada invalida, pergunta denovo	
+	pushl $opcaoInvalida
+	call printf
+	addl $4, %esp
+	jmp J1_tem11 
+
+J2_tem11:
+
+	#Pergunta se J2 (computador) quer jogar ou fugir
+
+	call probabilidadeJ2aceitar12
+
+	movl respostaApostaJ2, %eax
+	cmpl $1, %eax
+	je J2_aceita11
+	cmpl $2, %eax
+	je J2_foge11
+
+J1_aceita11:
+
+	movl $3, aposta
+
+	pushl $1
+	pushl $aceitou11
+	call printf
+	addl $8, %esp
+
+	jmp inicio_Rodada1
+
+J1_foge11:
+
+	pushl $1
+	pushl $fugiu11
+	call printf
+	addl $8, %esp
+
+	#J2 ganhou mao
+
+	movl $1, flagMaoJaTeveGanhador
+
+	movl aposta, %eax
+	addl %eax, tentosJ2 #Incrementa o numero de pontos do jogador em 1
+
+	pushl $infoJ2GanhouMao
+	call printf
+	pushl aposta
+	pushl $infoValendo
+	call printf
+	addl $12, %esp
+	jmp fimExecutaMao11
+
+J2_aceita11:
+
+	movl $3, aposta
+
+	pushl $2
+	pushl $aceitou11
+	call printf
+	addl $8, %esp
+
+	jmp inicio_Rodada1
+
+J2_foge11:
+
+	pushl $2
+	pushl $fugiu11
+	call printf
+	addl $8, %esp
+
+	#J1 ganhou mao
+
+	movl $1, flagMaoJaTeveGanhador
+
+	movl aposta, %eax
+	addl %eax, tentosJ1 #Incrementa o numero de pontos do jogador em 1
+
+	pushl $infoJ1GanhouMao
+	call printf
+	pushl aposta
+	pushl $infoValendo
+	call printf
+	addl $12, %esp
+	jmp fimExecutaMao11
+
+inicio_Rodada1:
+
+	pushl $abertura1
+	call printf
+	pushl $aberturaRodada1
+	call printf
+	pushl $abertura1
+	call printf
+	addl $12, %esp
+
+	call sorteiaPrimeiro
+	
+	movl flagIniciou, %eax
+	cmpl $1, %eax #Se jogador 1 iniciou a partida
+	je J1_comecou
+
+	call escolheCartaJ1
+	jmp executa_Rodada1
+
+J1_comecou:
+
+	call escolheCartaJ2
+
+executa_Rodada1:
+
+	call compara2Cartas
+	movl flagGanhouAtual, %eax
+	movl %eax, flagGanhouRodada1
+
+	call pausaExecucao
+
+inicio_Rodada2:
+
+	pushl $abertura1
+	call printf
+	pushl $aberturaRodada2
+	call printf
+	pushl $abertura1
+	call printf
+	addl $12, %esp
+
+	movl flagGanhouRodada1, %eax
+	cmpl $1, %eax
+	jg J2_ganhouR1
+
+	call escolheCartaJ1
+	call escolheCartaJ2
+	jmp executa_Rodada2
+
+J2_ganhouR1:
+
+	call escolheCartaJ2
+	call escolheCartaJ1
+
+executa_Rodada2:
+	
+	call compara2Cartas
+	movl flagGanhouAtual, %eax
+	movl %eax, flagGanhouRodada2
+	
+	call verificaGanhadorMao #Verifica se na segunda rodada alguem ja ganhou
+	
+	movl flagMaoJaTeveGanhador, %eax
+	cmpl $1, %eax
+	je fimExecutaMao11
+
+	call pausaExecucao
+
+inicia_Rodada3:
+
+	pushl $abertura1
+	call printf
+	pushl $aberturaRodada3
+	call printf
+	pushl $abertura1
+	call printf
+	addl $12, %esp
+
+	movl flagGanhouRodada2, %eax
+	cmpl $1, %eax
+	jg J2_ganhouR2
+
+	call escolheCartaJ1
+	call escolheCartaJ2
+	jmp executa_Rodada3
+
+J2_ganhouR2:
+
+	call escolheCartaJ2
+	call escolheCartaJ1
+
+executa_Rodada3:
+	
+	call compara2Cartas
+	movl flagGanhouAtual, %eax
+	movl %eax, flagGanhouRodada3
+
+	movl $1, flagJaFoiR3
+
+	call verificaGanhadorMao
+
+fimExecutaMao11:
+
+	call imprimePlacar
+	call pausaExecucao
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
+#Verifica se um dos jogadores ja esta com 11 tentos, caso afirmativo seta a flagJogadorTem11
+verificaMao11:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl tentosJ1, %eax #Se J1 tem 11 tentos
+	cmpl $11, %eax
+	je J1tem11
+
+	movl tentosJ2, %eax #Se nao, se J2 tem 11 Tentos
+	cmpl $11, %eax
+	je J2tem11
+
+	jmp fimVerificaMao11
+
+J1tem11:
+
+	movl tentosJ2, %eax #Se J1 e J2 tem 11 tentos, executa mao normalmente (flag continua com 0)
+	cmpl $11, %eax
+	je dois_tem11
+
+	movl $1, flagJogadorTem11
+	jmp fimVerificaMao11
+
+
+J2tem11:
+
+	movl $2, flagJogadorTem11
+	jmp fimVerificaMao11
+
+dois_tem11:
+
+	movl $0, flagJogadorTem11
+
+fimVerificaMao11:
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
+#Calcula probabilidade de Jogador 2 pedir truco
+probabilidadeJ2pedirTruco:
 
 	pushl %ebp
 	movl %esp, %ebp
@@ -1249,16 +1559,16 @@ propabilidadeJ2pedirTruco:
 	movl aleatorio, %eax
 
 	cmpl probabilidade, %eax
-	jl probabilidade_sim #30% de chance de pedir truco
+	jl probabilidade_sim # probabilidade% de chance de pedir truco
 
 	movl $2, numDigitado
-	jmp fimPropabilidadeJ2pedirTruco
+	jmp fimProbabilidadeJ2pedirTruco
 
 probabilidade_sim:
 
 	movl $1, numDigitado
 	
-fimPropabilidadeJ2pedirTruco:
+fimProbabilidadeJ2pedirTruco:
 
 	movl %ebp, %esp
 	popl %ebp
@@ -1267,7 +1577,7 @@ fimPropabilidadeJ2pedirTruco:
 #-----------------------------------------------------------------------------------------------------------
 
 #Calcula probabilidade de Jogador 2 pedir 12 (20% sim | 80% nao)
-propabilidadeJ2aceitar12:
+probabilidadeJ2aceitar12:
 
 	pushl %ebp
 	movl %esp, %ebp
@@ -1281,17 +1591,17 @@ propabilidadeJ2aceitar12:
 	call geraRandom
 	movl aleatorio, %eax
 
-	cmpl $20, %eax
-	jl probabilidadeSim #20% de chance de aceitar 12
+	cmpl probabilidade, %eax
+	jl probabilidadeSim # probabilidade% de chance de aceitar 12
 
 	movl $2, respostaApostaJ2
-	jmp fimPropabilidadeJ2pedirTruco
+	jmp fimProbabilidadeJ2pedirTruco
 
 probabilidadeSim:
 
 	movl $1, respostaApostaJ2
 	
-fimPropabilidadeJ2aceitarTruco:
+fimProbabilidadeJ2aceitarTruco:
 
 	movl %ebp, %esp
 	popl %ebp
@@ -1301,7 +1611,7 @@ fimPropabilidadeJ2aceitarTruco:
 
 #Calcula se J2 aceita aposta e seta a flag respostaApostaJ2 (0 = foge | 1 = aceita | 2 = aumenta aposta)
 #Aleatoriamente (20% foge | 60% aceita | 20% aumenta )
-calculaProbabilidadeJ2:
+probabilidadeJ2_foge_aceita_aumenta:
 
 	pushl %ebp
 	movl %esp, %ebp
@@ -1321,18 +1631,18 @@ calculaProbabilidadeJ2:
 	jl probabilidade_aumenta #20% de chance de aumentar aposta
 
 	movl $1, respostaApostaJ2
-	jmp fimCalculaProbabilidadeJ2 #60% restantes de chance de aceitar
+	jmp fimProbabilidadeJ2_foge_aceita_aumenta #60% restantes de chance de aceitar
 
 probabilidade_foge:
 
 	movl $0, respostaApostaJ2
-	jmp fimCalculaProbabilidadeJ2
+	jmp fimProbabilidadeJ2_foge_aceita_aumenta
 
 probabilidade_aumenta:
 
 	movl $2, respostaApostaJ2
 
-fimCalculaProbabilidadeJ2:
+fimProbabilidadeJ2_foge_aceita_aumenta:
 
 	movl %ebp, %esp
 	popl %ebp
@@ -1381,7 +1691,7 @@ J1pede_truco:
 	call printf
 	addl $8, %esp
 
-	call calculaProbabilidadeJ2
+	call probabilidadeJ2_foge_aceita_aumenta
 	movl respostaApostaJ2, %eax
 	cmpl $0, %eax
 	je J2_fugiu #Se J2 fugir
@@ -1484,7 +1794,7 @@ J1pede_9:
 	call printf
 	addl $8, %esp
 
-	call calculaProbabilidadeJ2
+	call probabilidadeJ2_foge_aceita_aumenta
 	movl respostaApostaJ2, %eax
 	cmpl $0, %eax
 	je J2_fugiu #Se J2 fugir
@@ -1559,7 +1869,7 @@ opcaoJ2pedirTruco:
 
 perguntaJ2_truco:
 
-	call propabilidadeJ2pedirTruco
+	call probabilidadeJ2pedirTruco
 
 	movl numDigitado, %eax #Verifica e trata a resposta do jogador
 	cmpl $1, %eax
@@ -1625,7 +1935,7 @@ J1pede_6:
 
 	addl $8, %esp
 
-	call calculaProbabilidadeJ2
+	call probabilidadeJ2_foge_aceita_aumenta
 
 	movl respostaApostaJ2, %eax
 	cmpl $0, %eax
@@ -1700,7 +2010,7 @@ J1pede_12:
 
 	addl $8, %esp
 
-	call propabilidadeJ2aceitar12
+	call probabilidadeJ2aceitar12
 
 	movl respostaApostaJ2, %eax
 	cmpl $0, %eax
@@ -1810,7 +2120,7 @@ pausaExecucao:
 	ret
 
 #-----------------------------------------------------------------------------------------------------------
-#Funções para calcular probabilidade de pedir/aceitar truco/6/9/12
+#Funções para calcular probabilidade de pedir/aceitar/fugir truco/6/9/12
 calculaProbabilidade:
 	pushl %eax
 	pushl %ebx
@@ -1820,7 +2130,7 @@ calculaProbabilidade:
 
 	movl probabilidadeBase, %ecx
 	movl %ecx, probabilidade
-	movl $10, %ebx
+	movl $10, %ebx #Uso nas divisoes para obter o peso da carta
 	
 calculaProbabilidade_As_Carta1:
 	addl probabilidadeBase, %ecx
@@ -1949,6 +2259,17 @@ _start:
 	addl $4, %esp
 	
 inicioJogo:
+
+	call verificaMao11 #Seta a flagJogadorTem11 caso alguem ja tenha 11 tentos
+
+	movl flagJogadorTem11, %eax
+	cmpl $0, %eax
+	je executaMaoNormal #Se a flag ainda tem 0 executa a mao normal
+
+	call executaMao11 #Se não, a flag esta setada, executa mao de 11
+	jmp verifica_ganhador_jogo
+
+executaMaoNormal:
 
 	call executaMao
 
