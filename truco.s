@@ -466,8 +466,6 @@ imprimeTodas:
 	pushl $pulaLinha
 	call printf
 
-	call calculaProbabilidade
-
 	pushl $infoCarta1J2
 	call printf
 	movl carta1J2, %eax
@@ -1549,8 +1547,9 @@ probabilidadeJ2pedirTruco:
 	pushl %ebp
 	movl %esp, %ebp
 
-	call geraSementeRandom
+	movl $5, probabilidadeBase
 	call calculaProbabilidade
+	call geraSementeRandom
 
 	movl $100, %eax
 	movl %eax, intervalo #Configura o intervalo (0-99)
@@ -1582,9 +1581,10 @@ probabilidadeJ2aceitar12:
 	pushl %ebp
 	movl %esp, %ebp
 
-	call geraSementeRandom
+	movl $3, probabilidadeBase
 	call calculaProbabilidade
-
+	call geraSementeRandom
+	
 	movl $100, %eax
 	movl %eax, intervalo #Configura o intervalo (0-99)
 
@@ -1616,8 +1616,8 @@ probabilidadeJ2_foge_aceita_aumenta:
 	pushl %ebp
 	movl %esp, %ebp
 
-	call geraSementeRandom
 	call calculaProbabilidade
+	call geraSementeRandom
 
 	movl $100, %eax
 	movl %eax, intervalo #Configura o intervalo (0-99)
