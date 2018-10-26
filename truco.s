@@ -97,9 +97,9 @@
 	#Ordem Crescente (Cartas): 4 5 6 7 Q J K A 2 3
 	#Ordem Crescente (Manilhas): Our Esp Cop Pau
 
-	vetMapeamento: .asciz "4 Our", "5 Our", "6 Our", "7 Our", "Q Our", "J Our", "K Our", "A Our", "2 Our", "3 Our", "4 Esp", "5 Esp", "6 Esp", "7 Esp", "Q Esp", "J Esp", "K Esp", "A Esp", "2 Esp", "3 Esp", "4 Cop", "5 Cop", "6 Cop", "7 Cop", "Q Cop", "J Cop", "K Cop", "A Cop", "2 Cop", "3 Cop", "4 Pau", "5 Pau", "6 Pau", "7 Pau", "Q Pau", "J Pau", "K Pau", "A Pau", "2 Pau", "3 Pau"
+	vetMapeamento: .asciz "4 Ouros  ", "5 Ouros  ", "6 Ouros  ", "7 Ouros  ", "Q Ouros  ", "J Ouros  ", "K Ouros  ", "A Ouros  ", "2 Ouros  ", "3 Ouros  ", "4 Espadas", "5 Espadas", "6 Espadas", "7 Espadas", "Q Espadas", "J Espadas", "K Espadas", "A Espadas", "2 Espadas", "3 Espadas", "4 Copas  ", "5 Copas  ", "6 Copas  ", "7 Copas  ", "Q Copas  ", "J Copas  ", "K Copas  ", "A Copas  ", "2 Copas  ", "3 Copas  ", "4 Paus   ", "5 Paus   ", "6 Paus   ", "7 Paus   ", "Q Paus   ", "J Paus   ", "K Paus   ", "A Paus   ", "2 Paus   ", "3 Paus   "
 
-	nomeCarta: .asciz "x xxx" #Aloca 6 bytes
+	nomeCarta: .asciz "x xxxxxxx" #Aloca 10 bytes
 
 	carta1J1: .int 0
 	carta2J1: .int 0
@@ -369,8 +369,8 @@ imprimeCarta:
 	movl $vetMapeamento, %edi #Move o endereço do vetor de mapeamento para edi
 	
 	movl $0, %edx #Limpa edx para evitar erro na multiplicacao
-	movl $6, %ebx
-	mull %ebx #Multilica eax por 6 (deslocamento no vetor de 6 bytes cada posicao)
+	movl $10, %ebx
+	mull %ebx #Multilica eax por 10 (deslocamento no vetor de 10 bytes cada posicao)
 	
 	addl %eax, %edi #Adiciona o deslocamento no endereco inicial do vetor
 
