@@ -117,7 +117,7 @@
 	cartaEscolhidaJ2: .int 0
 	pesoCartaJ2: .int 0
 
-	flagJogadorTem11: .int 0
+	flagJogadorTem11: .int 0 # 0 = Nenhum tem 11 | 1 = J1 tem 11  | 2 = J2 tem 11 | 3 = Ambos tem 11
 
 	opcaoAbertaFechada: .int 0
 	flagCartaFechadaJ1: .int 0
@@ -136,6 +136,7 @@
 	flagUsouCarta3J2: .int 0
 
 	flagIniciou: .int 0 #Flag que marca o jogador que iniciou (1 ou 2)
+	flagJogouPorUltimo: .int 0 #Flag que marca qual jogador jogou por ultimo na rodada (1 ou 2)
 	flagGanhouAtual: .int 0 #Flag setada com o jogador ganhador da rodada atual (1 ou 2 ou 0 caso empate)
 	flagGanhouRodada1: .int 0
 	flagGanhouRodada2: .int 0
@@ -170,15 +171,15 @@ iniciaVariaveis:
 
 	movl $1, aposta
 
-	movl $0, carta1J1
-	movl $0, carta2J1
-	movl $0, carta3J1
+	movl $999, carta1J1
+	movl $999, carta2J1
+	movl $999, carta3J1
 
-	movl $0, carta1J2
-	movl $0, carta2J2
-	movl $0, carta3J2
+	movl $999, carta1J2
+	movl $999, carta2J2
+	movl $999, carta3J2
 
-	movl $0, cartaVira
+	movl $999, cartaVira
 	movl $0, manilha
 
 	movl $0, cartaEscolhidaJ1
@@ -1149,12 +1150,17 @@ inicioRodada1:
 
 	call J1pedirTruco
 	call escolheCartaJ1
+
+	movl $1, flagJogouPorUltimo
+
 	jmp executaRodada1
 
 J1comecou:
 
 	call J2pedirTruco
 	call escolheCartaJ2
+
+	movl $2, flagJogouPorUltimo
 
 executaRodada1:
 
@@ -1176,12 +1182,27 @@ inicioRodada2:
 
 	movl flagGanhouRodada1, %eax
 	cmpl $1, %eax
-	jg J2ganhouR1
+	je J1ganhouR1
+	cmpl $2, %eax
+	je J2ganhouR1
+
+	#Em caso de empate, quem jogou por ultimo deve jogar primeiro na proxima rodada
+
+	movl flagJogouPorUltimo, %eax
+	cmpl $1, %eax
+	je J1ganhouR1
+	cmpl $2, %eax
+	je J2ganhouR1
+
+J1ganhouR1:
 
 	call J1pedirTruco
 	call escolheCartaJ1
 	call J2pedirTruco
 	call escolheCartaJ2
+
+	movl $2, flagJogouPorUltimo
+
 	jmp executaRodada2
 
 J2ganhouR1:
@@ -1190,6 +1211,8 @@ J2ganhouR1:
 	call escolheCartaJ2
 	call J1pedirTruco
 	call escolheCartaJ1
+
+	movl $1, flagJogouPorUltimo
 
 executaRodada2:
 	
@@ -1217,12 +1240,27 @@ iniciaRodada3:
 
 	movl flagGanhouRodada2, %eax
 	cmpl $1, %eax
-	jg J2ganhouR2
+	je J1ganhouR2
+	cmpl $2, %eax
+	je J2ganhouR2
+
+	#Em caso de empate, quem jogou por ultimo deve jogar primeiro na proxima rodada
+
+	movl flagJogouPorUltimo, %eax
+	cmpl $1, %eax
+	je J1ganhouR2
+	cmpl $2, %eax
+	je J2ganhouR2
+
+J1ganhouR2:
 
 	call J1pedirTruco
 	call escolheCartaJ1
 	call J2pedirTruco
 	call escolheCartaJ2
+
+	movl $2, flagJogouPorUltimo
+
 	jmp executaRodada3
 
 J2ganhouR2:
@@ -1231,6 +1269,8 @@ J2ganhouR2:
 	call escolheCartaJ2
 	call J1pedirTruco
 	call escolheCartaJ1
+
+	movl $1, flagJogouPorUltimo
 
 executaRodada3:
 	
@@ -1403,11 +1443,13 @@ inicio_Rodada1:
 	je J1_comecou
 
 	call escolheCartaJ1
+	movl $1, flagJogouPorUltimo
 	jmp executa_Rodada1
 
 J1_comecou:
 
 	call escolheCartaJ2
+	movl $2, flagJogouPorUltimo
 
 executa_Rodada1:
 
@@ -1429,16 +1471,34 @@ inicio_Rodada2:
 
 	movl flagGanhouRodada1, %eax
 	cmpl $1, %eax
-	jg J2_ganhouR1
+	je J1_ganhouR1
+	cmpl $2, %eax
+	je J2_ganhouR1
+
+	#Em caso de empate, quem jogou por ultimo deve jogar primeiro na proxima rodada
+
+	movl flagJogouPorUltimo, %eax
+	cmpl $1, %eax
+	je J1_ganhouR1
+	cmpl $2, %eax
+	je J2_ganhouR1
+
+
+J1_ganhouR1:
 
 	call escolheCartaJ1
 	call escolheCartaJ2
+
+	movl $2, flagJogouPorUltimo
+
 	jmp executa_Rodada2
 
 J2_ganhouR1:
 
 	call escolheCartaJ2
 	call escolheCartaJ1
+
+	movl $1, flagJogouPorUltimo
 
 executa_Rodada2:
 	
@@ -1466,16 +1526,33 @@ inicia_Rodada3:
 
 	movl flagGanhouRodada2, %eax
 	cmpl $1, %eax
-	jg J2_ganhouR2
+	je J1_ganhouR2
+	cmpl $2, %eax
+	je J2_ganhouR2
+
+	#Em caso de empate, quem jogou por ultimo deve jogar primeiro na proxima rodada
+
+	movl flagJogouPorUltimo, %eax
+	cmpl $1, %eax
+	je J1_ganhouR2
+	cmpl $2, %eax
+	je J2_ganhouR2
+
+J1_ganhouR2:
 
 	call escolheCartaJ1
 	call escolheCartaJ2
+
+	movl $2, flagJogouPorUltimo
+
 	jmp executa_Rodada3
 
 J2_ganhouR2:
 
 	call escolheCartaJ2
 	call escolheCartaJ1
+
+	movl $1, flagJogouPorUltimo
 
 executa_Rodada3:
 	
@@ -1531,7 +1608,7 @@ J2tem11:
 
 dois_tem11:
 
-	movl $0, flagJogadorTem11
+	movl $3, flagJogadorTem11
 
 fimVerificaMao11:
 
