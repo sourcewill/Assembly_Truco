@@ -1575,6 +1575,176 @@ fimExecutaMao11:
 
 #-----------------------------------------------------------------------------------------------------------
 
+#Executa uma mão normal, mas sem poder trucar
+executaMaoSemTruco:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	call iniciaVariaveis
+
+	call geraSementeRandom
+	call distribuiCartas
+	call defineManilha
+	call imprimeVira
+
+	pushl $pulaLinha
+	call printf
+	addl $4, %esp
+
+	#call imprimeTodas (para testes)
+
+_inicio_Rodada1:	
+
+	pushl $abertura1
+	call printf
+	pushl $aberturaRodada1
+	call printf
+	pushl $abertura1
+	call printf
+	addl $12, %esp
+
+	call sorteiaPrimeiro
+	
+	movl flagIniciou, %eax
+	cmpl $1, %eax #Se jogador 1 iniciou a partida
+	je _J1_comecou
+
+	call escolheCartaJ1
+
+	movl $1, flagJogouPorUltimo
+
+	jmp _executa_Rodada1
+
+_J1_comecou:
+
+	call escolheCartaJ2
+
+	movl $2, flagJogouPorUltimo
+
+_executa_Rodada1:
+
+	call compara2Cartas
+	movl flagGanhouAtual, %eax
+	movl %eax, flagGanhouRodada1
+
+	call pausaExecucao
+
+_inicio_Rodada2:
+
+	pushl $abertura1
+	call printf
+	pushl $aberturaRodada2
+	call printf
+	pushl $abertura1
+	call printf
+	addl $12, %esp
+
+	movl flagGanhouRodada1, %eax
+	cmpl $1, %eax
+	je _J1_ganhouR1
+	cmpl $2, %eax
+	je _J2_ganhouR1
+
+	#Em caso de empate, quem jogou por ultimo deve jogar primeiro na proxima rodada
+
+	movl flagJogouPorUltimo, %eax
+	cmpl $1, %eax
+	je _J1_ganhouR1
+	cmpl $2, %eax
+	je _J2_ganhouR1
+
+_J1_ganhouR1:
+
+	call escolheCartaJ1
+	call escolheCartaJ2
+
+	movl $2, flagJogouPorUltimo
+
+	jmp _executa_Rodada2
+
+_J2_ganhouR1:
+
+	call escolheCartaJ2
+	call escolheCartaJ1
+
+	movl $1, flagJogouPorUltimo
+
+_executa_Rodada2:
+	
+	call compara2Cartas
+	movl flagGanhouAtual, %eax
+	movl %eax, flagGanhouRodada2
+	
+	call verificaGanhadorMao #Verifica se na segunda rodada alguem ja ganhou
+	
+	movl flagMaoJaTeveGanhador, %eax
+	cmpl $1, %eax
+	je fimExecutaMaoSemTruco
+
+	call pausaExecucao
+
+_inicia_Rodada3:
+
+	pushl $abertura1
+	call printf
+	pushl $aberturaRodada3
+	call printf
+	pushl $abertura1
+	call printf
+	addl $12, %esp
+
+	movl flagGanhouRodada2, %eax
+	cmpl $1, %eax
+	je _J1_ganhouR2
+	cmpl $2, %eax
+	je _J2_ganhouR2
+
+	#Em caso de empate, quem jogou por ultimo deve jogar primeiro na proxima rodada
+
+	movl flagJogouPorUltimo, %eax
+	cmpl $1, %eax
+	je _J1_ganhouR2
+	cmpl $2, %eax
+	je _J2_ganhouR2
+
+_J1_ganhouR2:
+
+	call escolheCartaJ1
+	call escolheCartaJ2
+
+	movl $2, flagJogouPorUltimo
+
+	jmp _executa_Rodada3
+
+_J2_ganhouR2:
+
+	call escolheCartaJ2
+	call escolheCartaJ1
+
+	movl $1, flagJogouPorUltimo
+
+_executa_Rodada3:
+	
+	call compara2Cartas
+	movl flagGanhouAtual, %eax
+	movl %eax, flagGanhouRodada3
+
+	movl $1, flagJaFoiR3
+
+	call verificaGanhadorMao
+
+fimExecutaMaoSemTruco:
+
+	call imprimePlacar
+	call pausaExecucao
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
 #Verifica se um dos jogadores ja esta com 11 tentos, caso afirmativo seta a flagJogadorTem11
 verificaMao11:
 
@@ -1593,7 +1763,7 @@ verificaMao11:
 
 J1tem11:
 
-	movl tentosJ2, %eax #Se J1 e J2 tem 11 tentos, executa mao normalmente (flag continua com 0)
+	movl tentosJ2, %eax #Se J1 e J2 tem 11 tentos, executa mao normal mas sem truco
 	cmpl $11, %eax
 	je dois_tem11
 
@@ -2342,13 +2512,26 @@ inicioJogo:
 	movl flagJogadorTem11, %eax
 	cmpl $0, %eax
 	je executaMaoNormal #Se a flag ainda tem 0 executa a mao normal
-
-	call executaMao11 #Se não, a flag esta setada, executa mao de 11
-	jmp verifica_ganhador_jogo
+	cmpl $1, %eax
+	je executaMaoDe11
+	cmpl $2, %eax
+	je executaMaoDe11
+	cmpl $3, %eax
+	je executaMaoNormalSemTruco #Se a flag tem 3, ambos tem 11, executa mao normal sem truco
 
 executaMaoNormal:
 
 	call executaMao
+	jmp verifica_ganhador_jogo
+
+executaMaoDe11:
+
+	call executaMao11 #Se não, a flag esta setada, executa mao de 11
+	jmp verifica_ganhador_jogo
+
+executaMaoNormalSemTruco:
+
+	call executaMaoSemTruco
 
 verifica_ganhador_jogo:
 
