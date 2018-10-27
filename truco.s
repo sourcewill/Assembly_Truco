@@ -1863,6 +1863,15 @@ probabilidadeJ2_foge_aceita_aumenta:
 	pushl %ebp
 	movl %esp, %ebp
 
+	movl $0, %edx
+	movl aposta, %eax
+	movl $3, %ebx
+	divl %ebx
+	movl $2, %ebx
+	mull %ebx
+	movl $10, probabilidadeBase
+	subl %eax, probabilidade
+	subl aposta, probabilidade
 	call calculaProbabilidade
 	call geraSementeRandom
 
@@ -1872,22 +1881,24 @@ probabilidadeJ2_foge_aceita_aumenta:
 	call geraRandom
 	movl aleatorio, %eax
 
-	cmpl $20, %eax
-	jl probabilidade_foge #20% de chance de fugir
-	cmpl $40, %eax
-	jl probabilidade_aumenta #20% de chance de aumentar aposta
+	cmpl probabilidade, %eax
+	jge probabilidade_foge
 
+	call geraRandom
+	movl aleatorio, %eax
+	cmpl $30, %eax
+	jl probabilidade_aumenta
+
+probabilidade_aceita
 	movl $1, respostaApostaJ2
-	jmp fimProbabilidadeJ2_foge_aceita_aumenta #60% restantes de chance de aceitar
-
-probabilidade_foge:
-
-	movl $0, respostaApostaJ2
 	jmp fimProbabilidadeJ2_foge_aceita_aumenta
 
 probabilidade_aumenta:
-
 	movl $2, respostaApostaJ2
+	jmp fimProbabilidadeJ2_foge_aceita_aumenta
+
+probabilidade_foge:
+	movl $0, respostaApostaJ2
 
 fimProbabilidadeJ2_foge_aceita_aumenta:
 
