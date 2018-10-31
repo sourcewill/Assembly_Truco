@@ -16,6 +16,7 @@
 	tentosJ2: .int 0
 
 	aposta: .int 1 #Numero de tentos que esta valendo uma mao (1, 3, 6, 9 ou 12)
+	rodada: .int 0 #Numero da rodada atual
 	
 	separador: .asciz "\n------------------------------------------------\n"	
 	abertura1: .asciz "\n+----------------------------------------------+"
@@ -817,6 +818,10 @@ J1escolheu3:
 
 pede_AbertaFechada:
 
+	movl rodada, %eax
+	cmpl $1, %eax
+	je fimEscolheCartaJ1
+
 	pushl $infoAbertaFechada
 	call printf
 	pushl $infoOpcao
@@ -1132,7 +1137,9 @@ executaMao:
 
 	#call imprimeTodas (para testes)
 
-inicioRodada1:	
+inicioRodada1:
+
+	movl $1, rodada
 
 	pushl $abertura1
 	call printf
@@ -1171,6 +1178,8 @@ executaRodada1:
 	call pausaExecucao
 
 inicioRodada2:
+
+	movl $2, rodada
 
 	pushl $abertura1
 	call printf
@@ -1229,6 +1238,8 @@ executaRodada2:
 	call pausaExecucao
 
 iniciaRodada3:
+
+	movl $3, rodada
 
 	pushl $abertura1
 	call printf
@@ -1427,6 +1438,8 @@ J2_foge11:
 	jmp fimExecutaMao11
 
 inicio_Rodada1:
+	
+	movl $1, rodada
 
 	pushl $abertura1
 	call printf
@@ -1460,6 +1473,8 @@ executa_Rodada1:
 	call pausaExecucao
 
 inicio_Rodada2:
+
+	movl $2, rodada
 
 	pushl $abertura1
 	call printf
@@ -1515,6 +1530,8 @@ executa_Rodada2:
 	call pausaExecucao
 
 inicia_Rodada3:
+
+	movl $3, rodada
 
 	pushl $abertura1
 	call printf
@@ -1596,6 +1613,8 @@ executaMaoSemTruco:
 
 _inicio_Rodada1:	
 
+	movl $1, rodada
+
 	pushl $abertura1
 	call printf
 	pushl $aberturaRodada1
@@ -1631,6 +1650,8 @@ _executa_Rodada1:
 	call pausaExecucao
 
 _inicio_Rodada2:
+
+	movl $2, rodada
 
 	pushl $abertura1
 	call printf
@@ -1685,6 +1706,8 @@ _executa_Rodada2:
 	call pausaExecucao
 
 _inicia_Rodada3:
+
+	movl $3, rodada
 
 	pushl $abertura1
 	call printf
