@@ -987,7 +987,7 @@ escolheMelhorCarta_carta1Maior:
 	movl carta3J2, %ebx
 	cmpl %eax, %ebx
 	jg escolheMelhorCarta_carta3Maior
-	movl $1 %eax
+	movl $1, %eax
 	jmp escolheMelhorCarta_fim
 
 escolheMelhorCarta_carta2Maior:
