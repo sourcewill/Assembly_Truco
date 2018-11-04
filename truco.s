@@ -897,10 +897,17 @@ escolheCartaJ2:
 
 pedeCartaJ2:
 	
+	movl rodada, %eax
+	cmpl $1, %eax
+	call escolheMelhorCarta
+	cmpl $0, %eax
+	jg jogaCarta
+
 	call geraRandom #Gera um numero aleatorio entre (0~2)
 	movl aleatorio, %eax 
 	addl $1, %eax #Soma 1 ao numero resultante, tendo assim (1~3)
 
+jogaCarta:
 	cmpl $1, %eax
 	je J2escolheu1
 
@@ -963,6 +970,37 @@ fimEscolheCartaJ2:
 	call printf
 	addl $12, %esp
 
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+escolheMelhorCarta:
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl carta1J2, %eax
+	movl carta2J2, %ebx
+	cmpl %eax, %ebx
+	jg escolheMelhorCarta_carta2Maior
+
+escolheMelhorCarta_carta1Maior:
+	movl carta3J2, %ebx
+	cmpl %eax, %ebx
+	jg escolheMelhorCarta_carta3Maior
+	movl $1, %eax
+	jmp escolheMelhorCarta_fim
+
+escolheMelhorCarta_carta2Maior:
+	movl carta3J2, %eax
+	cmpl %eax, %ebx
+	jl escolheMelhorCarta_carta3Maior
+	movl $2, %eax
+	jmp escolheMelhorCarta_fim
+
+escolheMelhorCarta_carta3Maior:
+	movl $3, %eax
+
+escolheMelhorCarta_fim:
 	movl %ebp, %esp
 	popl %ebp
 	ret
