@@ -28,26 +28,26 @@
 	aberturaRodada3: .asciz "\n|                 RODADA (3)                   |"
 	infoPlacar: .asciz "\n|              PLACAR DO JOGO                  |"
 
-	infoTentosJ1: .asciz "\n\nJogador 1 --> %d Tentos"
-	infoTentosJ2: .asciz "\nJogador 2 --> %d Tentos\n"
+	infoTentosJ1: .asciz "\n\nHUMANO --> %d Tentos"
+	infoTentosJ2: .asciz "\nMAQUINA --> %d Tentos\n"
 
 	infoDistribuidas: .asciz "\nCartas distribuidas:\n"
 	infoCartasJ1: .asciz "\nCartas disponiveis:\n"
 	infoSorteiaPrimeiro: .asciz "\nSorteando o jogador que iniciara a partida..."
-	infoJ1primeiro: .asciz "\nJogador 1 inicia a partida.\n"
-	infoJ2primeiro: .asciz "\nJogador 2 inicia a partida.\n"
-	infoCarta1J1: .asciz "\nCarta 1 (Jogador 1): "
-	infoCarta2J1: .asciz "\nCarta 2 (Jogador 1): "
-	infoCarta3J1: .asciz "\nCarta 3 (Jogador 1): "
-	infoCarta1J2: .asciz "\nCarta 1 (Jogador 2): "
-	infoCarta2J2: .asciz "\nCarta 2 (Jogador 2): "
-	infoCarta3J2: .asciz "\nCarta 3 (Jogador 2): "
-	infoCartaVira: .asciz "\nCarta Vira: "
+	infoJ1primeiro: .asciz "\nHUMANO inicia a partida.\n"
+	infoJ2primeiro: .asciz "\nMAQUINA inicia a partida.\n"
+	infoCarta1J1: .asciz "\nCarta 1 (Humano): "
+	infoCarta2J1: .asciz "\nCarta 2 (Humano): "
+	infoCarta3J1: .asciz "\nCarta 3 (Humano): "
+	infoCarta1J2: .asciz "\nCarta 1 (Maquina): "
+	infoCarta2J2: .asciz "\nCarta 2 (Maquina): "
+	infoCarta3J2: .asciz "\nCarta 3 (Maquina): "
+	infoCartaVira: .asciz "\n>> CARTA VIRA: "
 	infoDistrbuindo: .asciz "\nDistribuindo cartas aleatorias para os jogadores...\n"
 	infoPedeEscolhaCarta: .asciz "\nSelecione uma de suas cartas para jogar."
-	infoEscolhaJ1: .asciz "\n>> Carta escolhida por Jogador 1: "
-	infoEscolhaJ2: .asciz "\n>> Carta escolhida por Jogador 2: "
-	infoJ1jogouFechada: .asciz "\n>> Jogador 1 jogou uma carta fechada (virada para baixo)"
+	infoEscolhaJ1: .asciz "\n>> Carta escolhida por HUMANO: "
+	infoEscolhaJ2: .asciz "\n>> Carta escolhida por MAQUINA: "
+	infoJ1jogouFechada: .asciz "\n>> HUMANO jogou uma carta fechada (virada para baixo)"
 	infoValendo: .asciz " (Valendo: %d tentos)\n"
 	infoAbertaFechada: .asciz "\nComo deseja jogar a carta?\n\n1) Carta aberta\n2) Carta fechada\n"
 	infoOpcao: .asciz "\nOpcao escolhida: "
@@ -58,8 +58,8 @@
 	simNaoAumenta: .asciz "\n0) Fugir\n1) Aceitar\n2) Pedir %d\n"
 	fogeOuAceita: .asciz "\n0) Fugir\n1) Aceitar\n"
 
-	J1fugiu: .asciz "\nO Jogador 1 FUGIU da aposta.\n"
-	J2fugiu: .asciz "\nO Jogador 2 FUGIU da aposta.\n"
+	J1fugiu: .asciz "\nO HUMANO FUGIU da aposta.\n"
+	J2fugiu: .asciz "\nO MAQUINA FUGIU da aposta.\n"
 
 	valendo: .asciz "\nAPOSTA ACEITA. Agora a mao vale %d tentos!\n"
 
@@ -72,21 +72,21 @@
 	aceitou11: .asciz "\nJogador %d ACEITOU a Mao de 11!\n"
 	fugiu11: .asciz "\nJogador %d FUGIU da Mao de 11!\n"
 
-	J1ganhouRodada: .asciz "\n>> JOGADOR 1 GANHOU A RODADA!\n"
-	J2ganhouRodada: .asciz "\n>> JOGADOR 2 GANHOU A RODADA!\n"
+	J1ganhouRodada: .asciz "\n>> HUMANO GANHOU A RODADA!\n"
+	J2ganhouRodada: .asciz "\n>> MAQUINA GANHOU A RODADA!\n"
 	empateRodada: .asciz "\n>> A RODADA EMPATOU.\n"
 
-	infoJ1GanhouMao: .asciz "\n>> JOGADOR 1 VENCEU A MAO!"
-	infoJ2GanhouMao: .asciz "\n>> JOGADOR 2 VENCEU A MAO!"
+	infoJ1GanhouMao: .asciz "\n>> HUMANO VENCEU A MAO!"
+	infoJ2GanhouMao: .asciz "\n>> MAQUINA VENCEU A MAO!"
 	infoEmpateMao: .asciz "\n>> AS 3 RODADAS EMPARATARAM, NINGUEM VENCEU A MAO."
 
-	infoJ1ganhouJogo: .asciz "\n>> JOGADOR 1 VENCEU O JOGO!\n"
-	infoJ2ganhouJogo: .asciz "\n>> JOGADOR 2 VENCEU O JOGO!\n"	
+	infoJ1ganhouJogo: .asciz "\n>> HUMANO VENCEU O JOGO!\n"
+	infoJ2ganhouJogo: .asciz "\n>> MAQUINA VENCEU O JOGO!\n"	
 
 	pedeEscolhaCarta: .asciz "\n\nNumero da carta escolhida: "
 
-	J1escolhendo: .asciz "\nJogador 1 esta escolhendo uma carta...\n"
-	J2escolhendo: .asciz "\nJogador 2 esta escolhendo uma carta...\n"
+	J1escolhendo: .asciz "\nHUMANO esta escolhendo uma carta...\n"
+	J2escolhendo: .asciz "\nMAQUINA esta escolhendo uma carta...\n"
 
 	opcaoInvalida: .asciz "\nA opcao digitada eh INVALIDA."
 
@@ -100,7 +100,7 @@
 
 	vetMapeamento: .asciz "4 Ouros  ", "5 Ouros  ", "6 Ouros  ", "7 Ouros  ", "Q Ouros  ", "J Ouros  ", "K Ouros  ", "A Ouros  ", "2 Ouros  ", "3 Ouros  ", "4 Espadas", "5 Espadas", "6 Espadas", "7 Espadas", "Q Espadas", "J Espadas", "K Espadas", "A Espadas", "2 Espadas", "3 Espadas", "4 Copas  ", "5 Copas  ", "6 Copas  ", "7 Copas  ", "Q Copas  ", "J Copas  ", "K Copas  ", "A Copas  ", "2 Copas  ", "3 Copas  ", "4 Paus   ", "5 Paus   ", "6 Paus   ", "7 Paus   ", "Q Paus   ", "J Paus   ", "K Paus   ", "A Paus   ", "2 Paus   ", "3 Paus   "
 
-	nomeCarta: .asciz "x xxxxxxx" #Aloca 10 bytes
+	nomeCarta: .space 10 #Aloca 10 bytes
 
 	carta1J1: .int 0
 	carta2J1: .int 0
@@ -895,19 +895,12 @@ escolheCartaJ2:
 
 	movl $3, intervalo
 
-pedeCartaJ2:
-	
-	movl rodada, %eax
-	cmpl $1, %eax
-	call escolheMelhorCarta
-	cmpl $0, %eax
-	jg jogaCarta
+pedeCartaJ2:	
 
 	call geraRandom #Gera um numero aleatorio entre (0~2)
 	movl aleatorio, %eax 
 	addl $1, %eax #Soma 1 ao numero resultante, tendo assim (1~3)
 
-jogaCarta:
 	cmpl $1, %eax
 	je J2escolheu1
 
@@ -970,37 +963,6 @@ fimEscolheCartaJ2:
 	call printf
 	addl $12, %esp
 
-	movl %ebp, %esp
-	popl %ebp
-	ret
-
-escolheMelhorCarta:
-	pushl %ebp
-	movl %esp, %ebp
-
-	movl carta1J2, %eax
-	movl carta2J2, %ebx
-	cmpl %eax, %ebx
-	jg escolheMelhorCarta_carta2Maior
-
-escolheMelhorCarta_carta1Maior:
-	movl carta3J2, %ebx
-	cmpl %eax, %ebx
-	jg escolheMelhorCarta_carta3Maior
-	movl $1, %eax
-	jmp escolheMelhorCarta_fim
-
-escolheMelhorCarta_carta2Maior:
-	movl carta3J2, %eax
-	cmpl %eax, %ebx
-	jl escolheMelhorCarta_carta3Maior
-	movl $2, %eax
-	jmp escolheMelhorCarta_fim
-
-escolheMelhorCarta_carta3Maior:
-	movl $3, %eax
-
-escolheMelhorCarta_fim:
 	movl %ebp, %esp
 	popl %ebp
 	ret
@@ -1948,7 +1910,7 @@ probabilidadeJ2_foge_aceita_aumenta:
 
 	call geraRandom
 	movl aleatorio, %eax
-	cmpl $30, %eax
+	cmpl probabilidade, %eax
 	jl probabilidade_aumenta
 
 probabilidade_aceita:
@@ -2442,9 +2404,7 @@ pausaExecucao:
 #-----------------------------------------------------------------------------------------------------------
 #Funções para calcular probabilidade de pedir/aceitar/fugir truco/6/9/12
 calculaProbabilidade:
-	pushl %eax
-	pushl %ebx
-	pushl %edx
+
 	pushl %ebp
 	movl %esp, %ebp
 
@@ -2557,15 +2517,13 @@ calculaProbabilidade_Vira_Carta3:
 	addl %ecx, probabilidade
 
 fim_calculaProbabilidade:
-	pushl probabilidade
-	pushl $infoTextoProbabilidade
-	call printf
+	#pushl probabilidade
+	#pushl $infoTextoProbabilidade
+	#call printf
+	#addl $8, %esp
 
 	movl %ebp, %esp
 	popl %ebp
-	popl %edx
-	popl %ebx
-	popl %eax
 	ret
 
 #-----------------------------------------------------------------------------------------------------------
