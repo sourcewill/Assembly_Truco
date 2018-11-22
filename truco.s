@@ -118,6 +118,11 @@
 	cartaEscolhidaJ2: .int 0
 	pesoCartaJ2: .int 0
 
+	cartaCompara1: .int 0
+	cartaCompara2: .int 0
+	pesoCarta1: .int 0
+	pesoCarta2: .int 0
+
 	flagJogadorTem11: .int 0 # 0 = Nenhum tem 11 | 1 = J1 tem 11  | 2 = J2 tem 11 | 3 = Ambos tem 11
 
 	opcaoAbertaFechada: .int 0
@@ -893,13 +898,15 @@ escolheCartaJ2:
 	call printf
 	addl $4, %esp	
 
-	movl $3, intervalo
+	#movl $3, intervalo
 
 pedeCartaJ2:	
 
-	call geraRandom #Gera um numero aleatorio entre (0~2)
-	movl aleatorio, %eax 
-	addl $1, %eax #Soma 1 ao numero resultante, tendo assim (1~3)
+	#call geraRandom #Gera um numero aleatorio entre (0~2)
+	#movl aleatorio, %eax 
+	#addl $1, %eax #Soma 1 ao numero resultante, tendo assim (1~3)
+
+	call J2escolheMaiorCartaDisponivel #Testando
 
 	cmpl $1, %eax
 	je J2escolheu1
@@ -909,8 +916,6 @@ pedeCartaJ2:
 
 	cmpl $3, %eax
 	je J2escolheu3
-	
-invalidaJ2:
 
 	jmp pedeCartaJ2
 
@@ -918,7 +923,7 @@ J2escolheu1:
 
 	movl flagUsouCarta1J2, %eax #Verifica se a carta escolhida ja nao foi usada
 	cmpl $1, %eax
-	je invalidaJ2
+	je pedeCartaJ2
 
 	movl $1, flagUsouCarta1J2 #Seta a falg indicando que a carta foi usada
 
@@ -930,7 +935,7 @@ J2escolheu2:
 
 	movl flagUsouCarta2J2, %eax
 	cmpl $1, %eax
-	je invalidaJ2
+	je pedeCartaJ2
 
 	movl $1, flagUsouCarta2J2
 
@@ -942,7 +947,7 @@ J2escolheu3:
 
 	movl flagUsouCarta3J2, %eax
 	cmpl $1, %eax
-	je invalidaJ2
+	je pedeCartaJ2
 
 	movl $1, flagUsouCarta3J2
 
@@ -2521,6 +2526,300 @@ fim_calculaProbabilidade:
 	#pushl $infoTextoProbabilidade
 	#call printf
 	#addl $8, %esp
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
+#Recebe 2 cartas pelos rotulos cartaCompara1 e cartaCompara2 e retorna qual é maior (1 ou 2) pelo reg eax
+#Retorna 0 em caso de empate
+maiorEntre2Cartas:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	#Calcula o peso das 2 cartas
+
+	movl cartaCompara1, %eax
+	movl $0, %edx #Limpa edx para evitar erro na divisao
+	movl $10, %ebx
+	divl %ebx #Divide eax por 10
+	movl %edx, pesoCarta1 #Coloca o resto no peso da carta
+
+	movl cartaCompara2, %eax
+	movl $0, %edx
+	movl $10, %ebx
+	divl %ebx
+	movl %edx, pesoCarta2
+
+	#Verifica se as cartas sao manilhas
+
+	movl pesoCarta1, %eax
+	cmpl %eax, manilha #Se 1 é manilha
+	je _1ehManilha
+
+	movl pesoCarta2, %ebx
+	cmpl %ebx, manilha #Se 2 é manilha ja ganhou
+	je _2ganha
+
+	#Se nenhuma das duas eh manilha
+
+	cmpl %eax, %ebx
+	jl _1ganha
+	jg _2ganha
+	jmp _empate
+
+_1ehManilha:
+
+	movl pesoCarta2, %eax
+	cmpl %eax, manilha #Se 2 também é manilha
+	je _duasSaoManilhas
+	jmp _1ganha #Se não 1 ja ganhou
+
+_duasSaoManilhas:
+
+	#Se as duas sao manilhas, compara-se os nipes (que ja estao em ordem crescente no mapeamento)
+	movl cartaEscolhidaJ1, %eax
+	movl cartaEscolhidaJ2, %ebx
+	cmpl %eax, %ebx
+	jl J1ganha
+	jmp J2ganha
+
+_1ganha:
+
+	movl $1, %eax
+	jmp fim_maiorEntre2Cartas
+
+_2ganha:
+
+	movl $2, %eax
+	jmp fim_maiorEntre2Cartas
+
+_empate:
+
+	movl $0, %eax
+
+fim_maiorEntre2Cartas:
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
+#Escolhe a menor dentre as cartas DISPONIVEIS de J2 (Maquina) e retorna em eax (1, 2 ou 3)
+J2escolheMenorCartaDisponivel: 
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl rodada, %eax
+	cmpl $3, %eax
+	je terceira_rodada #Se ja esta na terceira rodada, basta pegar a unica carta restante
+
+	#Se ja usou uma das cartas, compara as duas restantes
+	movl flagUsouCarta1J2, %eax
+	cmpl $1, %eax
+	je compara_2_3
+
+	movl flagUsouCarta2J2, %eax
+	cmpl $1, %eax
+	je compara_1_3
+
+	movl flagUsouCarta3J2, %eax
+	cmpl $1, %eax
+	je compara_1_2
+
+	#Se nenhuma das cartas foi usada ainda, escolhe a menor dentre as 3
+	#Compara 1 e 2
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl carta2J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je compara_2_3
+	jmp compara_1_3
+
+compara_2_3:
+
+	#Move as cartas para os rotulos usados na funcao de comparacao
+
+	movl carta2J2, %eax
+	movl %eax, cartaCompara1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je menor_eh_3
+	jmp menor_eh_2
+
+compara_1_3:
+
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je menor_eh_3
+	jmp menor_eh_1
+
+compara_1_2:
+
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl carta2J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je menor_eh_2
+	jmp menor_eh_1
+
+terceira_rodada:
+
+	movl flagUsouCarta1J2, %eax
+	cmpl $0, %eax
+	je menor_eh_1
+
+	movl flagUsouCarta2J2, %eax
+	cmpl $0, %eax
+	je menor_eh_2
+
+	movl flagUsouCarta3J2, %eax
+	cmpl $0, %eax
+	je menor_eh_3
+
+menor_eh_1:
+
+	movl $1, %eax
+	jmp fimJ2escolheMenorCarta
+
+menor_eh_2:
+
+	movl $2, %eax
+	jmp fimJ2escolheMenorCarta
+
+menor_eh_3:
+
+	movl $3, %eax
+
+fimJ2escolheMenorCarta:
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
+#Escolhe a menor dentre as cartas DISPONIVEIS de J2 (Maquina) e retorna em eax (1, 2 ou 3)
+J2escolheMaiorCartaDisponivel: 
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	movl rodada, %eax
+	cmpl $3, %eax
+	je _terceira_rodada #Se ja esta na terceira rodada, basta pegar a unica carta restante
+
+	#Se ja usou uma das cartas, compara as duas restantes
+	movl flagUsouCarta1J2, %eax
+	cmpl $1, %eax
+	je _compara_2_3
+
+	movl flagUsouCarta2J2, %eax
+	cmpl $1, %eax
+	je _compara_1_3
+
+	movl flagUsouCarta3J2, %eax
+	cmpl $1, %eax
+	je _compara_1_2
+
+	#Se nenhuma das cartas foi usada ainda, escolhe a menor dentre as 3
+	#Compara 1 e 2
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl carta2J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je _compara_1_3
+	jmp _compara_2_3
+
+_compara_2_3:
+
+	#Move as cartas para os rotulos usados na funcao de comparacao
+
+	movl carta2J2, %eax
+	movl %eax, cartaCompara1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je maior_eh_2
+	jmp maior_eh_3
+
+_compara_1_3:
+
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je maior_eh_1
+	jmp maior_eh_3
+
+_compara_1_2:
+
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl carta2J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je maior_eh_1
+	jmp maior_eh_2
+
+_terceira_rodada:
+
+	movl flagUsouCarta1J2, %eax
+	cmpl $0, %eax
+	je maior_eh_1
+
+	movl flagUsouCarta2J2, %eax
+	cmpl $0, %eax
+	je maior_eh_2
+
+	movl flagUsouCarta3J2, %eax
+	cmpl $0, %eax
+	je maior_eh_3
+
+maior_eh_1:
+
+	movl $1, %eax
+	jmp fimJ2escolheMaiorCarta
+
+maior_eh_2:
+
+	movl $2, %eax
+	jmp fimJ2escolheMaiorCarta
+
+maior_eh_3:
+
+	movl $3, %eax
+
+fimJ2escolheMaiorCarta:
 
 	movl %ebp, %esp
 	popl %ebp
