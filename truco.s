@@ -110,6 +110,10 @@
 	carta2J2: .int 0
 	carta3J2: .int 0
 
+	ordemCrescente1: .int 0
+	ordemCrescente2: .int 0
+	ordemCrescente3: .int 0
+
 	cartaVira: .int 0
 	manilha: .int 0
 
@@ -896,17 +900,98 @@ escolheCartaJ2:
 
 	pushl $J2escolhendo
 	call printf
-	addl $4, %esp	
+	addl $4, %esp
 
-	#movl $3, intervalo
+	#Verifica qual a rodada atual
+	movl rodada, %eax
+	cmpl $1, %eax
+	je rodada_1
+	cmpl $2, %eax
+	je rodada_2
+	jmp rodada_3
+
+rodada_1:
+
+	movl flagIniciou, %eax
+	cmpl $2, %eax
+
+	je J2escolhe_maior #Se maquina iniciou, jaga sua maior carta
+	
+	#Se Maquina nao iniciou, tenta matar com a menor carta possivel
+	jmp J2tenta_matar
+
+rodada_2:
+
+	movl flagGanhouAtual, %eax
+
+	cmpl $0, %eax
+	je J2escolhe_maior #Se a primeira rodada empatou, joga a maior carta
+
+	cmpl $1, %eax #Se o humano venceu a primeira, tenta matar com menor possivel
+	je J2tenta_matar
+
+	#Se maquina venceu a primeira rodada, escolhe aleatoriamente
+	jmp J2escolhe_aleatoriamente
+
+rodada_3:
+
+	jmp J2escolhe_aleatoriamente
+
+J2escolhe_maior:
+
+	call J2escolheMaiorCartaDisponivel #Escolhe sua maior, retornada em eax
+
+	cmpl $1, %eax
+	je J2escolheu1
+
+	cmpl $2, %eax
+	je J2escolheu2
+
+	cmpl $3, %eax
+	je J2escolheu3
+
+J2escolhe_menor:
+
+	call J2escolheMenorCartaDisponivel #Escolhe sua maior, retornada em eax
+
+	cmpl $1, %eax
+	je J2escolheu1
+
+	cmpl $2, %eax
+	je J2escolheu2
+
+	cmpl $3, %eax
+	je J2escolheu3
+
+J2tenta_matar:
+	
+	movl flagCartaFechadaJ1, %eax
+	cmpl $1, %eax
+	je J2escolhe_menor #Se humano jogou carta fechada, basta jogar a menor carta disponivel
+
+	call J2mataComMenorPossivel
+
+	cmpl $1, %eax
+	je J2escolheu1
+
+	cmpl $2, %eax
+	je J2escolheu2
+
+	cmpl $3, %eax
+	je J2escolheu3
+
+	#Se nao consegue matar com nenhuma, joga sua menor carta
+	jmp J2escolhe_menor
+
+J2escolhe_aleatoriamente:
+
+	movl $3, intervalo
 
 pedeCartaJ2:	
 
-	#call geraRandom #Gera um numero aleatorio entre (0~2)
-	#movl aleatorio, %eax 
-	#addl $1, %eax #Soma 1 ao numero resultante, tendo assim (1~3)
-
-	call J2escolheMaiorCartaDisponivel #Testando
+	call geraRandom #Gera um numero aleatorio entre (0~2)
+	movl aleatorio, %eax 
+	addl $1, %eax #Soma 1 ao numero resultante, tendo assim (1~3)
 
 	cmpl $1, %eax
 	je J2escolheu1
@@ -958,6 +1043,7 @@ fimEscolheCartaJ2:
 
 	pushl $infoEscolhaJ2
 	call printf
+	addl $4, %esp
 	
 	movl cartaEscolhidaJ2, %eax
 	call imprimeCarta
@@ -966,7 +1052,7 @@ fimEscolheCartaJ2:
 	call printf
 	pushl $separador
 	call printf
-	addl $12, %esp
+	addl $8, %esp
 
 	movl %ebp, %esp
 	popl %ebp
@@ -1134,6 +1220,7 @@ executaMao:
 	call geraSementeRandom
 	call distribuiCartas
 	call defineManilha
+	call criaOrdemCrescenteJ2 #Ordena as cartas da maquina em ordem crescente
 	call imprimeVira
 
 	pushl $pulaLinha
@@ -1320,6 +1407,7 @@ executaMao11:
 	call geraSementeRandom
 	call distribuiCartas
 	call defineManilha
+	call criaOrdemCrescenteJ2 #Ordena as cartas da maquina em ordem crescente
 
 	pushl $pulaLinha
 	call printf
@@ -1608,6 +1696,7 @@ executaMaoSemTruco:
 	call geraSementeRandom
 	call distribuiCartas
 	call defineManilha
+	call criaOrdemCrescenteJ2 #Ordena as cartas da maquina em ordem crescente
 	call imprimeVira
 
 	pushl $pulaLinha
@@ -2533,6 +2622,113 @@ fim_calculaProbabilidade:
 
 #-----------------------------------------------------------------------------------------------------------
 
+#Coloca as cartas da Maquina em ordem crscente, nos rotulos de ordem
+criaOrdemCrescenteJ2:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+	call J2escolheMenorCartaDisponivel
+	cmpl $1, %eax
+	je _menor_eh_1
+	cmpl $2, %eax
+	je _menor_eh_1
+	jmp _menor_eh_3
+
+_menor_eh_1:
+	jmp cmp_2_3
+
+_menor_eh_2:
+	jmp cmp_1_3
+
+_menor_eh_3:
+	jmp cmp_1_2
+
+cmp_2_3:
+
+	movl carta2J2, %eax
+	movl %eax, cartaCompara1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je ordem_132
+	jmp ordem_123
+
+cmp_1_3:
+
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je ordem_231
+	jmp ordem_213
+
+cmp_1_2:
+
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl carta2J2, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	cmpl $1, %eax
+	je ordem_321
+	jmp ordem_312
+
+ordem_123:
+
+	movl $1, ordemCrescente1
+	movl $2, ordemCrescente2
+	movl $3, ordemCrescente3
+	jmp fim_criaOrdemCrescenteJ2
+
+ordem_132:
+
+	movl $1, ordemCrescente1
+	movl $3, ordemCrescente2
+	movl $2, ordemCrescente3
+	jmp fim_criaOrdemCrescenteJ2
+
+ordem_213:
+
+	movl $2, ordemCrescente1
+	movl $1, ordemCrescente2
+	movl $3, ordemCrescente3
+	jmp fim_criaOrdemCrescenteJ2
+
+ordem_231:
+
+	movl $2, ordemCrescente1
+	movl $3, ordemCrescente2
+	movl $1, ordemCrescente3
+	jmp fim_criaOrdemCrescenteJ2
+
+ordem_312:
+
+	movl $3, ordemCrescente1
+	movl $1, ordemCrescente2
+	movl $2, ordemCrescente3
+	jmp fim_criaOrdemCrescenteJ2
+
+ordem_321:
+
+	movl $3, ordemCrescente1
+	movl $2, ordemCrescente2
+	movl $1, ordemCrescente3
+
+fim_criaOrdemCrescenteJ2:
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
 #Recebe 2 cartas pelos rotulos cartaCompara1 e cartaCompara2 e retorna qual é maior (1 ou 2) pelo reg eax
 #Retorna 0 em caso de empate
 maiorEntre2Cartas:
@@ -2718,7 +2914,7 @@ fimJ2escolheMenorCarta:
 
 #-----------------------------------------------------------------------------------------------------------
 
-#Escolhe a menor dentre as cartas DISPONIVEIS de J2 (Maquina) e retorna em eax (1, 2 ou 3)
+#Escolhe a maior dentre as cartas DISPONIVEIS de J2 (Maquina) e retorna em eax (1, 2 ou 3)
 J2escolheMaiorCartaDisponivel: 
 
 	pushl %ebp
@@ -2820,6 +3016,268 @@ maior_eh_3:
 	movl $3, %eax
 
 fimJ2escolheMaiorCarta:
+
+	movl %ebp, %esp
+	popl %ebp
+	ret
+
+#-----------------------------------------------------------------------------------------------------------
+
+#Escolhe a menor carta possivel de J2 (maquina) que consiga matar a carta do jogador humano
+#Retorna 1, 2 ou 3 caso afirmativo, pelo reg eax
+#Retorna 0 caso nenhuma consiga matar
+J2mataComMenorPossivel:
+
+	pushl %ebp
+	movl %esp, %ebp
+
+tenta_matar_1:
+
+	movl ordemCrescente1, %eax
+	cmpl $1, %eax
+	je maisFraca_eh1
+	cmpl $2, %eax
+	je maisFraca_eh2
+	jmp maisFraca_eh3
+
+maisFraca_eh1:
+
+	movl flagUsouCarta1J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je tenta_matar_2
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne tenta_matar_2
+	movl $1, %eax
+	jmp fim_J2mataComMenorPossivel
+
+maisFraca_eh2:
+
+	movl flagUsouCarta2J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je tenta_matar_2
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta2J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne tenta_matar_2
+	movl $2, %eax
+	jmp fim_J2mataComMenorPossivel
+
+maisFraca_eh3:
+
+	movl flagUsouCarta3J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je tenta_matar_2
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne tenta_matar_2
+	movl $3, %eax
+	jmp fim_J2mataComMenorPossivel
+
+
+tenta_matar_2:
+
+	movl ordemCrescente2, %eax
+	cmpl $1, %eax
+	je media_eh1
+	cmpl $2, %eax
+	je media_eh2
+	jmp media_eh3
+
+media_eh1:
+
+	movl flagUsouCarta1J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je tenta_matar_3
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne tenta_matar_3
+	movl $1, %eax
+	jmp fim_J2mataComMenorPossivel
+
+media_eh2:
+
+	movl flagUsouCarta2J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je tenta_matar_3
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta2J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne tenta_matar_3
+	movl $2, %eax
+	jmp fim_J2mataComMenorPossivel
+
+media_eh3:
+
+	movl flagUsouCarta3J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je tenta_matar_3
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne tenta_matar_3
+	movl $3, %eax
+	jmp fim_J2mataComMenorPossivel
+
+
+tenta_matar_3:
+
+	movl ordemCrescente3, %eax
+	cmpl $1, %eax
+	je forte_eh1
+	cmpl $2, %eax
+	je forte_eh2
+	jmp forte_eh3
+
+forte_eh1:
+
+	movl flagUsouCarta1J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je nao_consegue_matar
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne nao_consegue_matar
+	movl $1, %eax
+	jmp fim_J2mataComMenorPossivel
+
+forte_eh2:
+
+	movl flagUsouCarta2J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je nao_consegue_matar
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta2J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne nao_consegue_matar
+	movl $2, %eax
+	jmp fim_J2mataComMenorPossivel
+
+forte_eh3:
+
+	movl flagUsouCarta3J2, %eax #Verifica se a carta ja nao foi usada
+	cmpl $1, %eax
+	je nao_consegue_matar
+
+	#Verifica se a carta de J2 mata a carta escolhida por J1
+	movl carta3J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas #Compara as duas, resultado retornado em eax (1 ou 2)
+
+	#Verifica se a carta de J2 ganhou, caso contrario tenta a proxima
+	cmpl $1, %eax
+	jne nao_consegue_matar
+	movl $3, %eax
+	jmp fim_J2mataComMenorPossivel
+
+nao_consegue_matar:
+
+	#Verifica se consegue pelo menos empatar
+
+tenta_empatar1:
+
+	movl carta1J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas
+
+	cmpl $0, %eax
+	jne tenta_empatar2
+	movl $1, %eax
+	jmp fim_J2mataComMenorPossivel
+
+tenta_empatar2:
+
+	movl carta2J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas
+
+	cmpl $0, %eax
+	jne tenta_empatar3
+	movl $2, %eax
+	jmp fim_J2mataComMenorPossivel
+
+tenta_empatar3:
+
+	movl carta3J2, %eax
+	movl %eax, cartaCompara1
+	movl cartaEscolhidaJ1, %eax
+	movl %eax, cartaCompara2
+	call maiorEntre2Cartas
+
+	cmpl $0, %eax
+	jne nao_mata_nem_empata
+	movl $3, %eax
+	jmp fim_J2mataComMenorPossivel
+
+nao_mata_nem_empata:
+	movl $0, %eax
+
+fim_J2mataComMenorPossivel:
 
 	movl %ebp, %esp
 	popl %ebp
