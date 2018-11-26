@@ -829,7 +829,7 @@ pede_AbertaFechada:
 
 	movl rodada, %eax
 	cmpl $1, %eax
-	je fimEscolheCartaJ1
+	je mostra_escolha
 
 	pushl $infoAbertaFechada
 	call printf
@@ -915,7 +915,7 @@ rodada_1:
 	movl flagIniciou, %eax
 	cmpl $2, %eax
 
-	je J2escolhe_maior #Se maquina iniciou, jaga sua maior carta
+	je J2escolhe_maior #Se maquina iniciou, joga sua maior carta ou aleatoria (50%/50%)
 	
 	#Se Maquina nao iniciou, tenta matar com a menor carta possivel
 	jmp J2tenta_matar
@@ -938,6 +938,19 @@ rodada_3:
 	jmp J2escolhe_aleatoriamente
 
 J2escolhe_maior:
+
+	movl rodada, %eax
+	cmpl $1, %eax
+	jne pula_chance_aleatorio #Se for a primeira rodada, pode jogar a maior ou uma aleatoria (50%/50%)
+
+	movl $100, intervalo
+	call geraRandom #Gera um numero aleatorio entre (0~99)
+	movl aleatorio, %eax 
+
+	cmpl $50, %eax
+	jl J2escolhe_aleatoriamente # 50% de probabilidade de jogar aleatorio
+
+	pula_chance_aleatorio:
 
 	call J2escolheMaiorCartaDisponivel #Escolhe sua maior, retornada em eax
 
