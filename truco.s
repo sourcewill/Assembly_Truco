@@ -602,7 +602,7 @@ compara2Cartas:
 	#Verifica se J2 (maquina) escolheu jogar a carta fechada
 	movl flagCartaFechadaJ2, %eax
 	cmpl $1, %eax
-	je J1ganha #Caso afirmativo, Jogador 2 ganha automaticamente
+	je J1ganha #Caso afirmativo, Jogador 1 ganha automaticamente
 
 	#Calcula o peso das 2 cartas
 
