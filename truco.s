@@ -48,6 +48,7 @@
 	infoEscolhaJ1: .asciz "\n>> Carta escolhida por HUMANO: "
 	infoEscolhaJ2: .asciz "\n>> Carta escolhida por MAQUINA: "
 	infoJ1jogouFechada: .asciz "\n>> HUMANO jogou uma carta fechada (virada para baixo)"
+	infoJ2jogouFechada: .asciz "\n>> MAQUINA jogou uma carta fechada (virada para baixo)"
 	infoValendo: .asciz " (Valendo: %d tentos)\n"
 	infoAbertaFechada: .asciz "\nComo deseja jogar a carta?\n\n1) Carta aberta\n2) Carta fechada\n"
 	infoOpcao: .asciz "\nOpcao escolhida: "
@@ -131,6 +132,7 @@
 
 	opcaoAbertaFechada: .int 0
 	flagCartaFechadaJ1: .int 0
+	flagCartaFechadaJ2: .int 0
 
 	flagJaPediuTruco: .int 0 #Flag que marca se alguem ja pediu truco (0 ou 1)
 
@@ -597,6 +599,11 @@ compara2Cartas:
 	cmpl $1, %eax
 	je J2ganha #Caso afirmativo, Jogador 2 ganha automaticamente
 
+	#Verifica se J2 (maquina) escolheu jogar a carta fechada
+	movl flagCartaFechadaJ2, %eax
+	cmpl $1, %eax
+	je J1ganha #Caso afirmativo, Jogador 2 ganha automaticamente
+
 	#Calcula o peso das 2 cartas
 
 	movl cartaEscolhidaJ1, %eax
@@ -898,6 +905,8 @@ escolheCartaJ2:
 	pushl %ebp
 	movl %esp, %ebp
 
+	movl $0, flagCartaFechadaJ2
+
 	pushl $J2escolhendo
 	call printf
 	addl $4, %esp
@@ -965,7 +974,21 @@ J2escolhe_maior:
 
 J2escolhe_menor:
 
-	call J2escolheMenorCartaDisponivel #Escolhe sua maior, retornada em eax
+	#Calcula probabilidade de jogar a carta fechada
+
+	movl $100, intervalo
+	call geraRandom
+	movl aleatorio, %eax
+
+	cmpl $40, %eax
+	jg pulaOpcaoCartaFechadaMaquina
+
+	# 40% de chance de jogar a carta fechada
+	movl $1, flagCartaFechadaJ2
+
+	pulaOpcaoCartaFechadaMaquina :
+
+	call J2escolheMenorCartaDisponivel #Escolhe sua menor, retornada em eax
 
 	cmpl $1, %eax
 	je J2escolheu1
@@ -1054,12 +1077,26 @@ J2escolheu3:
 
 fimEscolheCartaJ2:
 
+	movl flagCartaFechadaJ2, %eax
+	cmpl $1, %eax
+	jne pulaImprimeEscolhaFechada
+
+	#Imprime que Maquina jogou a carta fechada
+	pushl $infoJ2jogouFechada
+	call printf
+	addl $4, %esp
+	jmp fimEscolheCarta_J2
+
+	pulaImprimeEscolhaFechada:
+
 	pushl $infoEscolhaJ2
 	call printf
 	addl $4, %esp
 	
 	movl cartaEscolhidaJ2, %eax
 	call imprimeCarta
+
+fimEscolheCarta_J2:
 
 	pushl $pulaLinha
 	call printf
