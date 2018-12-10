@@ -175,7 +175,7 @@
 
 #-----------------------------------------------------------------------------------------------------------
 
-#Inicia todas as variaveis e flags
+#Inicia variaveis e flags necessarias
 iniciaVariaveis:
 
 	pushl %ebp
@@ -803,7 +803,7 @@ J1escolheu1:
 	cmpl $1, %eax
 	je invalidaJ1
 
-	movl $1, flagUsouCarta1J1 #Seta a falg indicando que a carta foi usada
+	movl $1, flagUsouCarta1J1 #Seta a flag indicando que a carta foi usada
 
 	movl carta1J1, %eax
 	movl %eax, cartaEscolhidaJ1
@@ -976,6 +976,11 @@ J2escolhe_menor:
 
 	#Calcula probabilidade de jogar a carta fechada
 
+	#Se for a primeira rodada não pode jogar carta fechada
+	movl rodada, %eax
+	cmpl $1, %eax
+	je pulaOpcaoCartaFechadaMaquina
+
 	movl $100, intervalo
 	call geraRandom
 	movl aleatorio, %eax
@@ -1046,7 +1051,7 @@ J2escolheu1:
 	cmpl $1, %eax
 	je pedeCartaJ2
 
-	movl $1, flagUsouCarta1J2 #Seta a falg indicando que a carta foi usada
+	movl $1, flagUsouCarta1J2 #Seta a flag indicando que a carta foi usada
 
 	movl carta1J2, %eax
 	movl %eax, cartaEscolhidaJ2
