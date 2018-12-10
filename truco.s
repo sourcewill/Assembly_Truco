@@ -4,8 +4,10 @@
 
 #Definicoes e regras do Truco: https://www.jogatina.com/regras-como-jogar-truco.html
 
-#Montando e executando o programa:
+#Biblioteca necessaria
 #sudo apt-get install gcc-multilib
+
+#Montando e executando o programa:
 #as -32 truco.s -o truco.o
 #ld -m elf_i386 truco.o -l c -dynamic-linker /lib/ld-linux.so.2 -o truco
 #./truco
@@ -30,6 +32,8 @@
 
 	infoTentosJ1: .asciz "\n\nHUMANO --> %d Tentos"
 	infoTentosJ2: .asciz "\nMAQUINA --> %d Tentos\n"
+
+	perguntaTeste: .asciz "\nDeseja exibir as cartas de todos os jogadores?\n(Funcao para TESTES)\n"
 
 	infoDistribuidas: .asciz "\nCartas distribuidas:\n"
 	infoCartasJ1: .asciz "\nCartas disponiveis:\n"
@@ -1276,15 +1280,46 @@ executaMao:
 	call distribuiCartas
 	call defineManilha
 	call criaOrdemCrescenteJ2 #Ordena as cartas da maquina em ordem crescente
-	call imprimeVira
 
 	pushl $pulaLinha
 	call printf
 	addl $4, %esp
 
-	#call imprimeTodas (para testes)
+pergunta_teste:
+
+	pushl $perguntaTeste
+	call printf
+	pushl $simNao
+	call printf
+	pushl $infoOpcao
+	call printf
+
+	pushl $numDigitado
+	pushl $formatoInt
+	call scanf
+	addl $20, %esp
+
+	movl numDigitado, %eax
+	cmpl $1, %eax
+	je imprime_teste
+	cmpl $2, %eax
+	je inicioRodada1
+
+	pushl $opcaoInvalida
+	call printf
+	addl $4, %esp
+	jmp pergunta_teste
+
+imprime_teste:
+
+	call imprimeTodas # Para testes
+	call pausaExecucao
 
 inicioRodada1:
+
+	pushl $pulaLinha
+	call printf
+	addl $4, %esp
 
 	movl $1, rodada
 
