@@ -10,9 +10,7 @@ sudo apt-get install gcc-multilib
 Digite os seguintes comandos no terminal: 
 
 as -32 truco.s -o truco.o
-
 ld -m elf_i386 truco.o -l c -dynamic-linker /lib/ld-linux.so.2 -o truco
-
 ./truco 
 
 • Montagem e execução com script
